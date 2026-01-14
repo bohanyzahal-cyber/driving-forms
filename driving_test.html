@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>טופס מבחן נהיגה - צה"ל - משרד הרישוי</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; padding: 20px; direction: rtl; }
+        
+        /* מיכל הטופס במסך רגיל */
+        .form-container { 
+            max-width: 1100px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border: 2px solid #000; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        }
+        
+        /* כותרת */
+        .header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 10px; padding-bottom: 5px; }
+        .header h1 { margin: 0; font-size: 24px; color: #1a3a1a; }
+        .header h2 { margin: 2px 0; font-size: 18px; }
+
+        /* אזור עליון - פרטים */
+        .top-info { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .vehicle-types { font-size: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; border: 1px solid #ccc; padding: 5px; background: #f9f9f9; }
+        
+        .details-section { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 15px; background: #fdfdfd; padding: 5px; border: 1px solid #eee; }
+        .field { display: flex; flex-direction: column; gap: 2px; }
+        .field label { font-weight: bold; font-size: 11px; color: #555; }
+        input[type="text"], input[type="date"], input[type="time"] { 
+            border: 1px solid #ccc; 
+            border-radius: 3px;
+            width: 100%; 
+            padding: 4px; 
+            font-family: inherit; 
+            font-size: 13px;
+            font-weight: bold;
+            background: #fff;
+        }
+
+        /* גריד ראשי - 3 עמודות */
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 2px solid #000; }
+        .column { border: 0.5px solid #000; display: flex; flex-direction: column; }
+        .column-title { background: #333; color: #fff; font-weight: bold; text-align: center; padding: 5px; border-bottom: 2px solid #000; font-size: 14px; }
+        
+        /* שורות בטבלה */
+        .row-item { display: flex; align-items: center; border-bottom: 1px solid #ccc; padding: 4px 8px; min-height: 30px; page-break-inside: avoid; }
+        .label-text { flex: 1; font-size: 12px; font-weight: 500; line-height: 1.1; }
+        
+        .score-select { width: 70px; font-size: 11px; margin-left: 5px; border: 1px solid #ccc; cursor: pointer; height: 24px; }
+        .visual-box { width: 24px; height: 24px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; background: #fff; margin-right: 5px; }
+
+        .v-mark { color: green; }
+        .x-mark { color: red; }
+        .ox-mark { color: red; width: 18px; height: 18px; border: 2px solid red; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+        /* תחתית */
+        .footer { margin-top: 10px; display: flex; gap: 15px; }
+        .notes-area { flex: 2; height: 70px; border: 1px solid #000; padding: 5px; font-family: inherit; resize: none; font-size: 12px; }
+        
+        .summary-box { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 5px; }
+        .fail-stamp { border: 3px solid red; color: red; padding: 2px 10px; text-align: center; font-size: 20px; font-weight: bold; transform: rotate(-3deg); align-self: center; }
+
+        /* חתימה דיגיטלית */
+        .digital-sig-box { text-align: center; border: 1px dashed #999; padding: 2px; background: #fff; }
+        canvas { cursor: crosshair; display: block; margin: 0 auto; }
+        .clear-btn { background: #eee; border: 1px solid #ccc; font-size: 10px; padding: 2px 5px; cursor: pointer; margin-top: 2px; width: 100%; }
+
+        /* כפתורים למטה */
+        .bottom-actions { text-align: center; margin-top: 20px; display: flex; gap: 15px; justify-content: center; }
+        .btn-action { padding: 12px 25px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; color: white; }
+        .btn-print { background: #c00; }
+        .btn-back { background: #555; }
+
+        /* --- הגדרות הדפסה לרוחב (Landscape) --- */
+        @media print { 
+            @page { 
+                size: A4 landscape; /* הופך את הדף לרוחב */
+                margin: 5mm;        /* שוליים מינימליים */
+            }
+
+            body { padding: 0; background: white; margin: 0; -webkit-print-color-adjust: exact; } 
+            
+            .form-container { 
+                border: none; 
+                box-shadow: none; 
+                width: 100%; 
+                max-width: 100%; 
+                padding: 0; 
+            } 
+
+            .no-print, .bottom-actions, .score-select, .clear-btn { display: none !important; } 
+            
+            /* דחיסת תוכן להדפסה */
+            .header h1 { font-size: 18px; }
+            .header h2 { font-size: 14px; margin: 0; }
+            .top-info { margin-bottom: 5px; padding-bottom: 5px; gap: 10px; }
+            .details-section { margin-bottom: 5px; padding: 0; border: none; }
+            .field label { font-size: 10px; }
+            input[type="text"], input[type="date"], input[type="time"] { 
+                border: none; 
+                border-bottom: 1px solid #000; 
+                border-radius: 0;
+                padding: 0;
+                font-size: 11px;
+                height: 16px;
+            }
+            
+            /* הקטנת השורות בטבלה כדי שייכנס הכל */
+            .row-item { padding: 1px 4px; min-height: 20px; border-bottom: 1px solid #ccc; }
+            .label-text { font-size: 10px; }
+            .visual-box { width: 18px; height: 18px; font-size: 14px; border: 1px solid #000; }
+            .column-title { font-size: 12px; padding: 2px; }
+
+            .footer { margin-top: 5px; }
+            .notes-area { height: 50px; }
+            .fail-stamp { font-size: 16px; border-width: 2px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <div class="header">
+        <h1>צה"ל - משרד הרישוי</h1>
+        <h2>תוצאות מבחן מעשי ברכב (נכשל)</h2>
+    </div>
+
+    <div class="top-info">
+        <div class="vehicle-types">
+            <label><input type="checkbox"> פרטי/מסחרי (B)</label>
+            <label><input type="checkbox"> משא קל (C1)</label>
+            <label><input type="checkbox"> משא כבד (C)</label>
+            <label><input type="checkbox"> גורר תומך (E)</label>
+            <label><input type="checkbox"> אוטובוס (D)</label>
+            <label><input type="checkbox"> אופנוע (A)</label>
+            <label><input type="checkbox"> מונית</label>
+        </div>
+        <div class="field" style="justify-content: center;">
+            <label>שם בית הספר לנהיגה:</label>
+            <input type="text" id="targetSchool">
+        </div>
+    </div>
+
+    <div class="details-section">
+        <div class="field"><label>שם משפחה:</label><input type="text" id="targetLastName"></div>
+        <div class="field"><label>שם פרטי:</label><input type="text" id="targetFirstName"></div>
+        <div class="field"><label>מס' אישי / ת"ז:</label><input type="text" id="targetID"></div>
+        <div class="field"><label>תאריך המבחן:</label><input type="text" id="targetDate"></div>
+        <div class="field"><label>שעת המבחן:</label><input type="time" id="targetTime"></div>
+        <div class="field"><label>מספר רכב:</label><input type="text" id="targetCar"></div>
+    </div>
+
+    <div class="main-grid">
+        <div class="column">
+            <div class="column-title">א. שליטה ברכב</div>
+            <div id="colA"></div>
+        </div>
+        <div class="column">
+            <div class="column-title">ב. התנועה</div>
+            <div id="colB"></div>
+        </div>
+        <div class="column">
+            <div class="column-title">ג. הדרך</div>
+            <div id="colC"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <textarea class="notes-area" placeholder="הערות הבוחן וסיבת הכישלון..."></textarea>
+        
+        <div class="summary-box">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="fail-stamp">נכשל</div>
+                <div class="field" style="width: 60%;"><label>שם הבוחן:</label><input type="text" id="targetTester"></div>
+            </div>
+            
+            <div class="digital-sig-box">
+                <canvas id="sig-canvas" width="250" height="60"></canvas>
+                <div class="no-print"><button class="clear-btn" onclick="clearSig()">נקה חתימה</button></div>
+                <div style="font-size:10px; font-weight:bold;">חתימת הבוחן</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-actions no-print">
+        <button class="btn-action btn-print" onclick="window.print()">הדפס / שמור PDF</button>
+        <button class="btn-action btn-back" onclick="window.close()">סגור וחזור לסידור עבודה</button>
+    </div>
+</div>
+
+<script>
+    const dataA = ["1. התחלת נסיעה", "2. שליטה בהגה", "3. שימוש במצמד/גלישה", "4. החלפת הילוכים במועד", "5. זינוק בעליה", "6. שימוש בבלם רגל/יד", "7. שליטה כללית ברכב", "8. איתות", "9. נסיעה לאחור (חניה)", "10. עצירת מטרה", "11. שימוש בבלמי האטה", "12. מחוונים ואזהרה", "13. אביזרי בטיחות", "14. נסיעה לאחור בזווית", "15. התרת ורתימת גרור"];
+    const dataB = ["1. זהירות", "2. הסתכלות", "3. שימוש במראות", "4. השתלבות בתנועה", "5. מתן זכות קדימה", "6. מהירות", "7. קצב נסיעה", "8. שמירת רווח", "9. אומדן רוחב", "10. עקיפות/נאקף", "11. נהיגת לילה/אורות", "12. ירידה לשול"];
+    const dataC = ["1. פניות ימינה", "2. פניות שמאלה", "3. מיקום במפגשים", "4. משמעת בנתיבים", "5. ציות לתמרורים", "6. ציות לרמזורים", "7. נסיעה בימין הדרך", "8. דרך שאינה עירונית", "9. התייחסות להולכי רגל", "10. נתיב האצה/האטה", "11. נהיגה בדרך צרה", "12. כביש רטוב"];
+
+    function renderColumn(id, list) {
+        const container = document.getElementById(id);
+        list.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'row-item';
+            div.innerHTML = `
+                <span class="label-text">${item}</span>
+                <select class="score-select no-print" onchange="markIcon(this)">
+                    <option value="">בחר</option>
+                    <option value="v">טוב (✓)</option>
+                    <option value="x">רע (X)</option>
+                    <option value="ox">הפקעה (⊗)</option>
+                </select>
+                <div class="visual-box"></div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function markIcon(sel) {
+        const box = sel.nextElementSibling;
+        const val = sel.value;
+        box.innerHTML = '';
+        if (val === 'v') box.innerHTML = '<span class="v-mark">✓</span>';
+        else if (val === 'x') box.innerHTML = '<span class="x-mark">✕</span>';
+        else if (val === 'ox') box.innerHTML = '<div class="ox-mark">✕</div>';
+    }
+
+    renderColumn('colA', dataA);
+    renderColumn('colB', dataB);
+    renderColumn('colC', dataC);
+
+    // חתימה דיגיטלית
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function getPos(e) {
+        const r = canvas.getBoundingClientRect();
+        return { 
+            x: (e.clientX || e.touches[0].clientX) - r.left, 
+            y: (e.clientY || e.touches[0].clientY) - r.top 
+        };
+    }
+
+    ['mousedown', 'touchstart'].forEach(evt => 
+        canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); })
+    );
+    ['mousemove', 'touchmove'].forEach(evt => 
+        canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); })
+    );
+    ['mouseup', 'touchend'].forEach(evt => canvas.addEventListener(evt, () => drawing = false));
+
+    function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // טעינת נתונים
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.has('school')) document.getElementById('targetSchool').value = urlParams.get('school');
+        if(urlParams.has('id')) document.getElementById('targetID').value = urlParams.get('id');
+        if(urlParams.has('car')) document.getElementById('targetCar').value = urlParams.get('car');
+        if(urlParams.has('date')) document.getElementById('targetDate').value = urlParams.get('date');
+        if(urlParams.has('time')) document.getElementById('targetTime').value = urlParams.get('time');
+        if(urlParams.has('tester')) document.getElementById('targetTester').value = urlParams.get('tester');
+
+        if(urlParams.has('name')) {
+            const fullName = urlParams.get('name').trim();
+            const firstSpaceIndex = fullName.indexOf(' ');
+            if (firstSpaceIndex > 0) {
+                document.getElementById('targetFirstName').value = fullName.substring(0, firstSpaceIndex);
+                document.getElementById('targetLastName').value = fullName.substring(firstSpaceIndex + 1);
+            } else {
+                document.getElementById('targetFirstName').value = fullName;
+            }
+        }
+    };
+</script>
+
+</body>
+</html>
