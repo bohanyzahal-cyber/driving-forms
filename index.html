@@ -498,4 +498,79 @@
             const dateVal = document.getElementById('dateInput').value || '';
             const testerVal = document.getElementById('testersInput').value.split(',')[0].trim();
             const url = `driving_test.html?name=${encodeURIComponent(nameVal)}&id=${encodeURIComponent(idVal)}&car=${encodeURIComponent(carVal)}&school=${encodeURIComponent(schoolVal)}&date=${encodeURIComponent(dateVal)}&tester=${encodeURIComponent(testerVal)}`;
-            window.open(url
+            window.open(url, '_blank');
+        }
+    }
+
+    function updateHeader() {
+        const day = document.getElementById('daySelect').value;
+        const date = document.getElementById('dateInput').value;
+        const areaSel = document.getElementById('areaSelect');
+        const area = areaSel.options[areaSel.selectedIndex].text; 
+        const testers = document.getElementById('testersInput').value;
+        const displayArea = (area === 'בחר אזור...') ? '_______' : area;
+
+        document.getElementById('dynamicTitle').innerText = `סידור עבודה ליום ${day} לתאריך ${date} לאזור ${displayArea}`;
+        document.getElementById('dynamicTesters').innerText = testers ? `הבוחנים: ${testers}` : '';
+        
+        if(testers) {
+            const firstTester = testers.split(',')[0].trim();
+            const details = testersDB[firstTester] || firstTester;
+            document.getElementById('testerDetailsDisplay').innerText = details;
+        } else {
+            document.getElementById('testerDetailsDisplay').innerText = '';
+        }
+
+        localStorage.setItem('header_day', day);
+        localStorage.setItem('header_date', date);
+        localStorage.setItem('header_area_idx', areaSel.selectedIndex);
+        localStorage.setItem('header_testers', testers);
+    }
+
+    function saveRowCount() { localStorage.setItem('plan_rows_count', planRowCount); }
+
+    // חתימה דיגיטלית
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function initSignature() {
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { 
+                x: (e.clientX || e.touches[0].clientX) - r.left, 
+                y: (e.clientY || e.touches[0].clientY) - r.top 
+            };
+        }
+
+        ['mousedown', 'touchstart'].forEach(evt => 
+            canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); })
+        );
+        ['mousemove', 'touchmove'].forEach(evt => 
+            canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); })
+        );
+        ['mouseup', 'touchend'].forEach(evt => {
+            canvas.addEventListener(evt, () => { 
+                drawing = false; 
+                localStorage.setItem('main_signature', canvas.toDataURL()); 
+            });
+        });
+        
+        const savedSig = localStorage.getItem('main_signature');
+        if(savedSig) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = savedSig;
+        }
+    }
+
+    function clearSig() { 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        localStorage.removeItem('main_signature');
+    }
+
+    function resetForm() { if(confirm('לנקות הכל?')) { localStorage.clear(); location.reload(); } }
+
+</script>
+</body>
+</html>
