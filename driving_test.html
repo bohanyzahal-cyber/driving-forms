@@ -53,15 +53,15 @@
         /* תיבת הערות מתרחבת */
         .notes-area { 
             flex: 2; 
-            min-height: 80px; /* גובה התחלתי */
+            min-height: 80px; 
             border: 1px solid #000; 
             padding: 5px; 
             font-family: inherit; 
-            resize: none; /* ביטול גרירה ידנית */
+            resize: none; 
             font-size: 13px; 
             line-height: 1.4; 
             background: #fffff0; 
-            overflow: hidden; /* הסתרת גלילה */
+            overflow: hidden; 
             height: auto;
         }
         
@@ -72,10 +72,14 @@
         canvas { cursor: crosshair; display: block; margin: 0 auto; }
         .clear-btn { background: #eee; border: 1px solid #ccc; font-size: 10px; padding: 2px 5px; cursor: pointer; margin-top: 2px; width: 100%; }
 
-        .bottom-actions { text-align: center; margin-top: 20px; display: flex; gap: 15px; justify-content: center; }
-        .btn-action { padding: 12px 25px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; color: white; }
+        .bottom-actions { text-align: center; margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-action { padding: 12px 25px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; color: white; display: flex; align-items: center; gap: 5px; }
         .btn-print { background: #c00; }
         .btn-back { background: #555; }
+        
+        /* כפתור וואטספ */
+        .btn-whatsapp { background: #25D366; }
+        .btn-whatsapp:hover { background: #128C7E; }
 
         @media print { 
             @page { size: A4 landscape; margin: 5mm; }
@@ -83,8 +87,6 @@
             .form-container { border: none; box-shadow: none; width: 100%; max-width: 100%; padding: 0; } 
             .no-print, .bottom-actions, .score-select, .clear-btn, .reason-select { display: none !important; } 
             .row-item { min-height: 20px; padding: 1px 4px; }
-            
-            /* בהדפסה, התיבה תהיה בגובה התוכן */
             .notes-area { border: 1px solid #000; overflow: visible; }
         }
     </style>
@@ -155,8 +157,11 @@
     </div>
     
     <div class="bottom-actions no-print">
+        <button class="btn-action btn-whatsapp" onclick="sendWhatsApp()">
+            <span style="font-size:20px">📱</span> שלח סיכום בוואטספ
+        </button>
         <button class="btn-action btn-print" onclick="window.print()">הדפס / שמור PDF</button>
-        <button class="btn-action btn-back" onclick="window.close()">סגור וחזור לסידור עבודה</button>
+        <button class="btn-action btn-back" onclick="window.close()">סגור וחזור</button>
     </div>
 </div>
 
@@ -323,10 +328,9 @@
         updateNotes();
     }
 
-    // פונקציה להתאמת גובה תיבת הטקסט אוטומטית
     function autoResize(textarea) {
-        textarea.style.height = 'auto'; // איפוס הגובה
-        textarea.style.height = (textarea.scrollHeight + 5) + 'px'; // הגדרה לגובה התוכן
+        textarea.style.height = 'auto'; 
+        textarea.style.height = (textarea.scrollHeight + 5) + 'px'; 
     }
 
     // פונקציה שבונה את ההערות הסופיות
@@ -336,9 +340,8 @@
         
         selects.forEach(sel => {
             if (sel.style.display !== 'none' && sel.value && sel.value !== "") {
-                // הסרת המספר מתחילת שם הסעיף
                 const rawLabel = sel.parentElement.querySelector('.label-text').innerText;
-                const cleanLabel = rawLabel.replace(/^\d+\.\s*/, ''); // מוחק "1. ", "10. " וכו'
+                const cleanLabel = rawLabel.replace(/^\d+\.\s*/, ''); 
                 const reason = sel.value;
                 
                 if (reason === "אחר") {
@@ -351,15 +354,32 @@
 
         const notesArea = document.getElementById('finalNotes');
         notesArea.value = notesText;
-        autoResize(notesArea); // הרחבת התיבה
+        autoResize(notesArea);
     }
 
-    // הפעלת בניית העמודות
+    // שליחה לוואטספ
+    function sendWhatsApp() {
+        const nameFirst = document.getElementById('targetFirstName').value || '';
+        const nameLast = document.getElementById('targetLastName').value || '';
+        const fullName = `${nameFirst} ${nameLast}`;
+        const notes = document.getElementById('finalNotes').value;
+        
+        if(!fullName.trim()) { alert('נא למלא שם נבחן'); return; }
+
+        let msg = `*תוצאות מבחן נהיגה*\n`;
+        msg += `שם הנבחן: ${fullName}\n`;
+        msg += `תוצאה: *נכשל*\n\n`;
+        msg += `*פירוט הליקויים:*\n${notes}`;
+        
+        // יצירת קישור ופתיחה
+        const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+    }
+
     renderColumn('colA', dataA);
     renderColumn('colB', dataB);
     renderColumn('colC', dataC);
 
-    // חתימה ודברים נוספים
     const canvas = document.getElementById('sig-canvas');
     const ctx = canvas.getContext('2d');
     let drawing = false;
