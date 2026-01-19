@@ -498,4 +498,130 @@
             <td><input type="time" class="tbl-input plan-input"></td>
             <td><input class="tbl-input plan-input"></td>
             <td><input type="number" class="tbl-input plan-input"></td>
-            <td><input type="number" class="
+            <td><input type="number" class="tbl-input plan-input"></td>
+            <td>${createTypeSelect().replace('exam-input', 'plan-input')}</td>
+            <td>${createSchoolCell(true)}</td>
+        `;
+        tbody.appendChild(row);
+        
+        refreshAllSchoolSelects();
+
+        row.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
+        row.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); savePlanData(); }));
+
+        planRowCount = tbody.children.length; 
+        if(save) {
+            localStorage.setItem('plan_rows_count', planRowCount);
+            savePlanData();
+        }
+    }
+
+    function removePlanRow() {
+        const tbody = document.getElementById('planningTableBody');
+        if (tbody.children.length > 1) { 
+            tbody.removeChild(tbody.lastChild); 
+            planRowCount = tbody.children.length; 
+            localStorage.setItem('plan_rows_count', planRowCount);
+            savePlanData(); 
+            calcTotals(); 
+        }
+    }
+
+    function calcTotals() {
+        const sums = [0,0,0,0, 0,0,0,0];
+        let grandTotal = 0;
+        document.querySelectorAll('#planningTableBody tr').forEach(row => {
+            row.querySelectorAll('input[type="number"].count-fail, input[type="number"].count-pass').forEach((inp, idx) => {
+                const val = parseInt(inp.value) || 0;
+                if(idx < 8) { sums[idx] += val; grandTotal += val; }
+            });
+        });
+        document.querySelectorAll('tfoot input.sum-fail, tfoot input.sum-pass').forEach((inp, idx) => { inp.value = sums[idx] > 0 ? sums[idx] : ''; });
+        document.getElementById('grandTotalDisplay').value = grandTotal > 0 ? grandTotal : '';
+    }
+
+    function checkFail(selectElem) {
+        saveExamData(); 
+        if (selectElem.value === 'נכשל') {
+            const row = selectElem.closest('tr');
+            const inputs = row.querySelectorAll('input:not(.other-input).exam-input'); 
+            
+            const schoolSel = row.querySelector('.school-select');
+            const schoolOther = row.querySelector('.school-other');
+            const schoolVal = (schoolSel.value === 'other') ? schoolOther.value : schoolSel.value;
+            
+            const carVal = inputs[0].value || '';
+            const idVal = inputs[1].value || '';
+            const nameVal = inputs[2].value || '';
+            
+            const dateVal = document.getElementById('dateInput').value || '';
+            const testerVal = document.getElementById('testersInput').value.split(',')[0].trim();
+            const url = `driving_test.html?name=${encodeURIComponent(nameVal)}&id=${encodeURIComponent(idVal)}&car=${encodeURIComponent(carVal)}&school=${encodeURIComponent(schoolVal)}&date=${encodeURIComponent(dateVal)}&tester=${encodeURIComponent(testerVal)}`;
+            window.open(url, '_blank');
+        }
+    }
+
+    function updateHeader() {
+        const day = document.getElementById('daySelect').value;
+        const date = document.getElementById('dateInput').value;
+        const areaSel = document.getElementById('areaSelect');
+        const area = areaSel.options[areaSel.selectedIndex] ? areaSel.options[areaSel.selectedIndex].text : ''; 
+        const testers = document.getElementById('testersInput').value;
+        const displayArea = (area === 'בחר אזור...' || !area) ? '_______' : area;
+
+        document.getElementById('dynamicTitle').innerText = `סידור עבודה ליום ${day} לתאריך ${date} לאזור ${displayArea}`;
+        document.getElementById('dynamicTesters').innerText = testers ? `הבוחנים: ${testers}` : '';
+        
+        if(testers) {
+            const firstTester = testers.split(',')[0].trim();
+            const details = testersDB[firstTester] || firstTester;
+            document.getElementById('testerDetailsDisplay').innerText = details;
+        } else {
+            document.getElementById('testerDetailsDisplay').innerText = '';
+        }
+    }
+
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function initSignature() {
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { 
+                x: (e.clientX || e.touches[0].clientX) - r.left, 
+                y: (e.clientY || e.touches[0].clientY) - r.top 
+            };
+        }
+
+        ['mousedown', 'touchstart'].forEach(evt => 
+            canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); })
+        );
+        ['mousemove', 'touchmove'].forEach(evt => 
+            canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); })
+        );
+        ['mouseup', 'touchend'].forEach(evt => {
+            canvas.addEventListener(evt, () => { 
+                drawing = false; 
+                localStorage.setItem('main_signature', canvas.toDataURL()); 
+            });
+        });
+        
+        const savedSig = localStorage.getItem('main_signature');
+        if(savedSig) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = savedSig;
+        }
+    }
+
+    function clearSig() { 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        localStorage.removeItem('main_signature');
+    }
+
+    function resetForm() { if(confirm('לנקות הכל?')) { localStorage.clear(); location.reload(); } }
+
+</script>
+</body>
+</html>
