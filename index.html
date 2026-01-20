@@ -5,52 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>סידור עבודה ודוח בוחן</title>
     <style>
-        body { background-color: #525659; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .a4-page { background-color: white; width: 210mm; min-height: 297mm; padding: 10mm; box-shadow: 0 0 15px rgba(0,0,0,0.5); box-sizing: border-box; position: relative; }
+        body { 
+            background-color: #525659; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            display: flex; 
+            justify-content: center; 
+        }
+        
+        /* דף A4 - בסיס */
+        .a4-page { 
+            background-color: white; 
+            width: 210mm; 
+            min-height: 297mm; 
+            padding: 10mm; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+            box-sizing: border-box; 
+            position: relative; 
+        }
 
+        /* --- התאמה למסך (Mobile/Desktop) --- */
         @media screen {
-            .a4-page { width: 100%; max-width: 210mm; height: auto; padding: 10px; }
-            .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; }
+            .a4-page {
+                width: 100%;
+                max-width: 210mm;
+                height: auto;
+                min-height: auto;
+                padding: 10px;
+            }
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-bottom: 10px;
+            }
             table { min-width: 600px; }
         }
 
+        /* הגדרות */
         .settings-panel { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; margin-bottom: 20px; border-radius: 5px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; direction: rtl; }
         .settings-panel input, .settings-panel select { width: 100%; padding: 6px; font-size: 14px; font-weight: bold; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .settings-title { grid-column: span 4; font-weight: bold; text-align: center; color: #0d47a1; margin-bottom: 5px; }
 
+        /* כותרות */
         .header-section { text-align: center; margin-bottom: 10px; }
         .main-title { font-size: 20px; margin: 0; font-weight: normal; }
         .sub-title { font-size: 16px; font-weight: bold; margin-top: 3px; }
 
+        /* טבלאות */
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; direction: rtl; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; vertical-align: middle; height: 34px; position: relative; }
+        th, td { border: 1px solid #000; padding: 2px; text-align: center; font-size: 12px; vertical-align: middle; height: 30px; }
         thead th { background-color: #e7e6e6; font-weight: bold; height: auto; padding: 4px; }
         
+        /* שורת סיכום */
         tfoot tr { background-color: #d1e7dd; font-weight: bold; border-top: 2px solid #000; }
         tfoot input { font-weight: bold; color: #000; }
         .grand-total { font-size: 14px; color: #000; background: #badbcc !important; border: 2px solid #0f5132 !important; }
 
+        /* קלטים */
         input.tbl-input, select.tbl-input { width: 100%; border: none; background: transparent; text-align: center; font-size: 12px; outline: none; font-family: inherit; padding: 0; margin: 0; height: 100%; display: block; }
         select.tbl-input { -webkit-appearance: none; appearance: none; cursor: pointer; }
 
-        input[type="time"] { -webkit-appearance: none; appearance: none; background: transparent; }
-        input[type="time"]::-webkit-calendar-picker-indicator { display: none !important; }
+        /* שדה שעה נקי */
+        input[type="time"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent; }
+        input[type="time"]::-webkit-calendar-picker-indicator { display: none !important; background: none !important; }
         input[type="time"]::-webkit-date-and-time-value { text-align: center; }
 
-        /* תיקון לשדה "אחר" בבית ספר */
-        .school-wrapper { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        /* שדה קלט "אחר" מיוחד */
         input.other-input { 
-            display: none; 
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #fff; border: 2px solid #007bff; 
-            text-align: center; font-size: 12px; z-index: 10;
-            box-sizing: border-box;
+            display: none; border-bottom: 1px dashed #000; background: #fff; 
+            width: 90%; margin: 0 auto; font-size: 11px; height: 20px;
         }
-        .btn-clear-other {
-            display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
-            background: #ccc; border: none; font-size: 10px; cursor: pointer; z-index: 11; padding: 2px 5px; border-radius: 50%;
+
+        /* הערות כלליות */
+        .general-notes-box {
+            border: 1px solid #000; 
+            padding: 5px; 
+            min-height: 50px; 
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
         }
+        #generalNotes {
+            width: 100%; border: none; resize: none; font-family: inherit; 
+            font-size: 12px; background: transparent; outline: none;
+            overflow: hidden; min-height: 25px;
+        }
+
+        /* כפתורים */
+        .floating-controls { position: fixed; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+        .table-actions { display: flex; gap: 10px; margin-bottom: 5px; direction: rtl; }
+        button { border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 12px; }
+        .btn-print { background-color: #007bff; }
+        .btn-reset { background-color: #dc3545; }
+        .btn-add { background-color: #28a745; }
+        .btn-remove { background-color: #6c757d; }
+        .clear-sig-btn { background-color: #6c757d; margin-top: 5px; font-size: 10px; padding: 2px 6px; width: auto; display: inline-block; }
+        .btn-pass-list { background-color: #17a2b8; width: 100%; margin-top: 10px; }
+
+        /* חתימות */
+        .signature-section { display: flex; justify-content: space-between; margin-top: 20px; align-items: flex-end; }
+        .sig-box { width: 45%; text-align: center; }
+        .tester-details { font-weight: bold; font-size: 12px; line-height: 1.3; white-space: pre-line; min-height: 40px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;}
+        
+        canvas { border: 1px dashed #999; cursor: crosshair; background: #fff; display: block; margin: 0 auto; }
 
         /* Outbox Styling */
         #outbox-section { margin-top: 20px; border-top: 2px dashed #999; padding-top: 15px; }
@@ -59,30 +117,27 @@
         .btn-whatsapp { background: #25D366; }
         .btn-delete { background: #dc3545; }
 
-        .floating-controls { position: fixed; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
-        .table-actions { display: flex; gap: 10px; margin-bottom: 5px; direction: rtl; }
-        button { border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 12px; }
-        .btn-print { background-color: #007bff; }
-        .btn-reset { background-color: #dc3545; }
-        .btn-add { background-color: #28a745; }
-        .btn-remove { background-color: #6c757d; }
-        .btn-pass-list { background-color: #17a2b8; width: 100%; margin-top: 10px; }
-        .clear-sig-btn { background-color: #6c757d; margin-top: 5px; font-size: 10px; padding: 2px 6px; width: auto; display: inline-block; }
-
-        .signature-section { display: flex; justify-content: space-between; margin-top: 20px; align-items: flex-end; }
-        .sig-box { width: 45%; text-align: center; }
-        .tester-details { font-weight: bold; font-size: 12px; line-height: 1.3; white-space: pre-line; min-height: 40px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;}
-        canvas { border: 1px dashed #999; cursor: crosshair; background: #fff; display: block; margin: 0 auto; }
-
+        /* --- הגדרות הדפסה (A4 מדויק) --- */
         @media print { 
             body { background: white; padding: 0; margin: 0; }
             .floating-controls, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, .btn-pass-list { display: none !important; }
-            .a4-page { box-shadow: none; margin: 0; width: 210mm; height: 297mm; padding: 10mm; overflow: hidden; }
+            
+            .a4-page { 
+                box-shadow: none; margin: 0; width: 210mm; height: 297mm; 
+                padding: 10mm; overflow: hidden; 
+            }
             .table-responsive { overflow: visible; display: block; }
             table { min-width: 100%; width: 100%; }
+            
+            td, th { height: 22px; padding: 0; } 
+            .header-section { margin-bottom: 5px; }
+            table { margin-bottom: 5px; }
+            .signature-section { margin-top: 10px; }
+            
             .school-select.hidden-print { display: none; }
             input.other-input.visible-print { display: block; border: none; font-weight: bold; text-align: center;}
-            .btn-clear-other { display: none; }
+            
+            .general-notes-box { height: auto; border: 1px solid #000; }
         }
     </style>
 </head>
@@ -168,21 +223,27 @@
     <div class="table-responsive">
         <table>
             <colgroup>
-                <col style="width: 4%;"> <col style="width: 18%;"> <col style="width: 10%;"> <col style="width: 13%;">
-                <col style="width: 20%;"> <col style="width: 8%;"> <col style="width: 10%;"> <col style="width: 7%;"> <col style="width: 10%;">
-            </colgroup>
+                <col style="width: 4%;">  <col style="width: 18%;"> <col style="width: 10%;"> <col style="width: 13%;"> <col style="width: 20%;"> <col style="width: 8%;">  <col style="width: 10%;"> <col style="width: 7%;">  <col style="width: 10%;"> </colgroup>
             <thead>
                 <tr>
-                    <th>מס</th><th>שם ביה"ס</th><th>מס' רכב</th><th>ת.ז</th><th>שם הנבחן</th><th>דרגה</th><th>אוכלוסיה</th><th>מבחן</th><th>תוצאה</th>
+                    <th>מס'</th>
+                    <th>שם ביה"ס</th>
+                    <th>מס' רכב</th> 
+                    <th>ת.ז</th>
+                    <th>שם הנבחן</th>
+                    <th>דרגה</th>
+                    <th>אוכלוסיה</th>
+                    <th>מבחן</th>
+                    <th>תוצאה</th>
                 </tr>
             </thead>
             <tbody id="examTableBody"></tbody>
         </table>
     </div>
 
-    <div style="border: 1px solid #000; padding: 5px; height: 45px; margin-top: 5px;">
-        <strong style="font-size: 12px;">הערות כלליות:</strong>
-        <textarea id="generalNotes" style="width: 100%; border: none; resize: none; font-family: inherit; height: 25px;" rows="1" oninput="saveNotes()"></textarea>
+    <div class="general-notes-box">
+        <strong style="font-size: 12px;">הערות כלליות ליום העבודה:</strong>
+        <textarea id="generalNotes" rows="1" placeholder="הקלד כאן הערות חופשיות (מתרחב אוטומטית)..." oninput="saveNotes(); autoResize(this)"></textarea>
     </div>
 
     <div class="signature-section">
@@ -191,6 +252,7 @@
             <div style="border-top: 1px solid #000; width: 80%; margin: 2px auto;"></div>
             <strong>פרטי בוחן אחראי</strong>
         </div>
+
         <div class="sig-box">
             <canvas id="sig-canvas" width="180" height="60"></canvas>
             <button class="clear-sig-btn" onclick="clearSig()">נקה חתימה</button>
@@ -200,7 +262,7 @@
     </div>
 
     <div id="outbox-section" class="no-print">
-        <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">📬 דואר יוצא (הודעות וואטספ שמורות)</h3>
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">📬 דואר יוצא (הודעות וואטספ שמורות - נכשלים)</h3>
         <div id="outbox-list"></div>
         <div style="text-align:center; margin-top:10px;">
             <button onclick="clearOutbox()" style="background:#555; padding:5px 10px; font-size:11px;">נקה היסטוריה</button>
@@ -209,163 +271,78 @@
 </div>
 
 <script>
-    // --- רשימה מלאה של בתי ספר ואזורים ---
+    // --- רשימה מלאה של בתי ספר ואזורים מתוקנת ---
     const schoolMap = {
-        "באר שבע": ["שרייבר", "יובלי", "על גלגלים", "יחד", "איציק", "ב.ה 6930"],
-        "אופקים/נתיבות": ["שי אופקים", "ב.ה 6930", "אופקים", "נתיבות"],
+        "באר שבע": ["שרייבר", "יובלי", "על גלגלים", "יחד", "איציק", "ב.ה 6930", "ליין בהד 6"],
+        "אופקים": ["ב.ה 6930", "אופקים", "שי אופקים"],
+        "נתיבות": ["שי אופקים", "נתיבות"],
         "דימונה": ["על גלגלים", "דימונה", "עיון"],
         "אשקלון": ["איחוד", "אשקלון", "ב.ה 6930"],
         "קרית גת": ["דני", "קרית גת"],
         "אשדוד": ["זהב", "אשדוד"],
         "לוד": ["ב.ה 6920", "איילון", "יובלי", "על גלגלים"],
-        "בית נבאללה/שוהם": ["ב.ה 6920", "עיון", "בית נבאללה"],
+        "בית נבאללה": ["ב.ה 6920", "עיון", "בית נבאללה"],
+        "שוהם": ["ב.ה 6920"],
         "צריפין": ["בהד 6", "רישוי"],
         "רחובות": ["יובלי", "רחובות"],
         "ראשון לציון": ["שער ראשון", "שרייבר", "שרייבר אופנועים"],
-        "יפו/תל אביב": ["א.סלע", "יחדיו", "רישוי", "שרייבר", "איחוד"],
+        "יפו": ["א.סלע", "יחדיו", "רישוי", "שרייבר", "איחוד", "יפו עיוני"],
+        "תל אביב": ["איחוד", "שרייבר"],
         "פתח תקווה": ["קרן", "אדי", "שרייבר", "טל", "אדר"],
         "הדר יוסף": ["גולן", "גור אריה", "שרייבר"],
         "נתניה": ["אורן תמיר", "שגיא", "שרייבר"],
         "חדרה": ["אוטו", "נתיב", "שרייבר"],
         "כפר סבא": ["שרייבר", "טוב", "הדרכים"],
         "חיפה": ["נתיב", "אומן", "חיפה", "ב.ה 6910"],
+        "קרית חיים": ["הקריה", "גל ירוק"],
         "עכו": ["ארגמן", "סמיר", "נתיבי הגליל"],
         "עפולה": ["החמישה", "לין", "ב.ה 6910", "יהב", "שרייבר"],
-        "טבריה/קרית שמונה": ["האון", "רוממה גליל", "נמרוד סער"],
+        "טבריה": ["האון"],
+        "קרית שמונה": ["רוממה גליל", "נמרוד סער"],
         "ירושלים": ["שרייבר", "דרכים", "לג ירושלים", "על גלגלים", "עוז"],
         "בהלץ": ["טרקטור עיוני", "טרקטור מעשי", "בהד 14"],
         "לג תלש": ["תלש עיוני"],
         "ביסט 21": ["ביסט"]
     };
 
-    const testersDB = {
-        "ויטלי גיטלמן": "ויטלי גיטלמן\nבוחן רישוי צה\"ל\nמס' 3604",
-        "אללוף יצחק": "אללוף יצחק\nבוחן רישוי צה\"ל\nמס' ____",
-        "דרור מלל": "דרור מלל\nבוחן רישוי צה\"ל\nמס' ____",
-        "אלבלה אברהם": "אלבלה אברהם\nבוחן רישוי צה\"ל\nמס' ____",
-        "בני לוי": "בני לוי\nבוחן רישוי צה\"ל\nמס' ____",
-        "שמשון נגאוקר": "שמשון נגאוקר\nבוחן רישוי צה\"ל\nמס' ____",
-        "אלקס קורנבליט": "אלקס קורנבליט\nבוחן רישוי צה\"ל\nמס' ____",
-        "צרימי שרון": "צרימי שרון\nבוחן רישוי צה\"ל\nמס' ____",
-        "יניר נאוגאוקר": "יניר נאוגאוקר\nבוחן רישוי צה\"ל\nמס' ____",
-        "דודו פלס": "דודו פלס\nבוחן רישוי צה\"ל\nמס' ____",
-        "רון יהוד": "רון יהוד\nבוחן רישוי צה\"ל\nמס' ____",
-        "לוי בנימין": "לוי בנימין\nבוחן רישוי צה\"ל\nמס' ____"
-    };
-
     const vehicleTypes = ['','1','A1','A','B','C1','C','E','D'];
     const popTypes = ['','קד"צ','ואוצ\'ר','צבא','פרטי/אחר'];
+    
     let planRowCount = 0;
 
+    // --- אתחול (Load) ---
     window.onload = function() {
         initAreaSelect();
         const savedAreaIdx = localStorage.getItem('header_area_idx');
         if(savedAreaIdx) document.getElementById('areaSelect').selectedIndex = savedAreaIdx;
+        
         handleAreaChange(false); 
 
         if(localStorage.getItem('header_day')) document.getElementById('daySelect').value = localStorage.getItem('header_day');
         if(localStorage.getItem('header_date')) document.getElementById('dateInput').value = localStorage.getItem('header_date');
         if(localStorage.getItem('header_testers')) document.getElementById('testersInput').value = localStorage.getItem('header_testers');
-        if(localStorage.getItem('general_notes')) document.getElementById('generalNotes').value = localStorage.getItem('general_notes');
+        
+        // טעינת ההערות
+        if(localStorage.getItem('general_notes')) {
+            const notesEl = document.getElementById('generalNotes');
+            notesEl.value = localStorage.getItem('general_notes');
+            autoResize(notesEl);
+        }
         
         updateHeader(); 
         initTables(); 
         loadDataIntoTables();
         initSignature();
-        renderOutbox(); // טעינת דואר יוצא
+        renderOutbox();
     };
 
-    // --- Outbox & Pass List Logic ---
-
-    // 1. רשימת עוברים מרוכזת
-    function generatePassList() {
-        const rows = document.querySelectorAll('#examTableBody tr');
-        const passBySchool = {};
-        const date = document.getElementById('dateInput').value || 'היום';
-        const area = document.getElementById('areaSelect').options[document.getElementById('areaSelect').selectedIndex].text;
-
-        rows.forEach(row => {
-            const inputs = row.querySelectorAll('input, select');
-            // inputs indices: 
-            // 0=Select(School), 1=Input(OtherSchool), 2=Car, 3=ID, 4=Name, 5=License, 6=Pop, 7=TestNum, 8=Result
-            
-            // זיהוי שם בית ספר (סלקט או אחר)
-            const schoolSel = inputs[0];
-            const schoolOther = inputs[1];
-            const schoolName = (schoolSel.value === 'other' ? schoolOther.value : schoolSel.value).trim();
-            
-            const studentName = inputs[4].value.trim();
-            const result = inputs[8].value;
-
-            if(result === 'עבר' && schoolName && studentName) {
-                if(!passBySchool[schoolName]) passBySchool[schoolName] = [];
-                passBySchool[schoolName].push(studentName);
-            }
-        });
-
-        if(Object.keys(passBySchool).length === 0) {
-            alert('לא נמצאו תלמידים שעברו (או שחסר שם בי"ס/תלמיד)');
-            return;
-        }
-
-        let msg = `*רשימת עוברים - ${date} - אזור ${area}*\n`;
-        for (const [school, students] of Object.entries(passBySchool)) {
-            msg += `\n🚗 *${school}*\n`;
-            students.forEach(st => msg += `✅ ${st}\n`);
-        }
-
-        const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+    // --- פונקציית התנפחות ---
+    function autoResize(textarea) {
+        textarea.style.height = 'auto'; 
+        textarea.style.height = (textarea.scrollHeight + 5) + 'px'; 
     }
 
-    // 2. דואר יוצא (משותף עם דף הכישלון דרך LocalStorage)
-    function renderOutbox() {
-        const list = document.getElementById('outbox-list');
-        const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        list.innerHTML = '';
-        
-        if(savedMessages.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:#777; font-size:12px;">אין הודעות ממתינות</p>';
-            return;
-        }
-
-        savedMessages.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'outbox-item';
-            div.innerHTML = `
-                <div style="font-size:12px;"><strong>${item.name}</strong> <span style="color:#777">(${item.time})</span></div>
-                <div class="outbox-btn-group">
-                    <button class="btn-whatsapp" onclick="sendSaved(${index})">שלח</button>
-                    <button class="btn-delete" onclick="deleteSaved(${index})">מחק</button>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-    }
-
-    function sendSaved(index) {
-        const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        const item = savedMessages[index];
-        const url = `https://wa.me/?text=${encodeURIComponent(item.text)}`;
-        window.open(url, '_blank');
-    }
-
-    function deleteSaved(index) {
-        let savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        savedMessages.splice(index, 1);
-        localStorage.setItem('whatsapp_outbox', JSON.stringify(savedMessages));
-        renderOutbox();
-    }
-
-    function clearOutbox() {
-        if(confirm('למחוק את כל ההודעות השמורות?')) {
-            localStorage.removeItem('whatsapp_outbox');
-            renderOutbox();
-        }
-    }
-
-    // --- שאר הפונקציות (בניה, שמירה, טבלאות) ---
-
+    // --- בניית טבלאות ---
     function initTables() {
         const savedPlanCount = parseInt(localStorage.getItem('plan_rows_count')) || 4;
         const planBody = document.getElementById('planningTableBody');
@@ -396,7 +373,7 @@
         }
         
         refreshAllSchoolSelects();
-        
+
         document.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
         document.querySelectorAll('.exam-input').forEach(el => el.addEventListener('input', saveExamData));
         document.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); saveAllData(); }));
@@ -404,23 +381,29 @@
     }
 
     function saveAllData() { savePlanData(); saveExamData(); }
+
     function savePlanData() {
         const inputs = document.querySelectorAll('#planningTableBody input, #planningTableBody select');
         const vals = Array.from(inputs).map(el => el.value);
         localStorage.setItem('data_plan_table', JSON.stringify(vals));
     }
+
     function saveExamData() {
         const inputs = document.querySelectorAll('#examTableBody input, #examTableBody select');
         const vals = Array.from(inputs).map(el => el.value);
         localStorage.setItem('data_exam_table', JSON.stringify(vals));
     }
+
     function saveHeader() {
         updateHeader();
         localStorage.setItem('header_day', document.getElementById('daySelect').value);
         localStorage.setItem('header_date', document.getElementById('dateInput').value);
         localStorage.setItem('header_testers', document.getElementById('testersInput').value);
     }
-    function saveNotes() { localStorage.setItem('general_notes', document.getElementById('generalNotes').value); }
+    
+    function saveNotes() {
+        localStorage.setItem('general_notes', document.getElementById('generalNotes').value);
+    }
 
     function loadDataIntoTables() {
         const planData = JSON.parse(localStorage.getItem('data_plan_table'));
@@ -433,6 +416,7 @@
                 }
             });
         }
+
         const examData = JSON.parse(localStorage.getItem('data_exam_table'));
         if (examData) {
             const examInputs = document.querySelectorAll('#examTableBody input, #examTableBody select');
@@ -449,7 +433,9 @@
     function initAreaSelect() {
         const sel = document.getElementById('areaSelect');
         sel.innerHTML = '<option value="">בחר אזור...</option>';
-        Object.keys(schoolMap).sort().forEach(area => { sel.innerHTML += `<option value="${area}">${area}</option>`; });
+        Object.keys(schoolMap).sort().forEach(area => {
+            sel.innerHTML += `<option value="${area}">${area}</option>`;
+        });
         sel.innerHTML += `<option value="other">אחר...</option>`;
     }
 
@@ -471,39 +457,26 @@
         document.querySelectorAll('.school-select').forEach(selectElem => {
             const currentVal = selectElem.value;
             selectElem.innerHTML = opts;
-            if (currentVal && (schools.includes(currentVal) || currentVal === 'other')) selectElem.value = currentVal;
-            else selectElem.value = "";
+            if (currentVal && (schools.includes(currentVal) || currentVal === 'other')) {
+                selectElem.value = currentVal;
+            } else {
+                selectElem.value = "";
+            }
             toggleOtherInput(selectElem);
         });
     }
 
     function toggleOtherInput(selectElem) {
-        const inputElem = selectElem.nextElementSibling.nextElementSibling; // האינפוט הוא האח השני (אחרי הכפתור)
-        const clearBtn = selectElem.nextElementSibling; // הכפתור הוא האח הראשון
-        
+        const inputElem = selectElem.nextElementSibling;
         if(selectElem.value === 'other') {
             inputElem.style.display = 'block';
             selectElem.classList.add('hidden-print');
             inputElem.classList.add('visible-print');
-            clearBtn.style.display = 'block'; // מציג כפתור איפוס
         } else {
             inputElem.style.display = 'none';
             selectElem.classList.remove('hidden-print');
             inputElem.classList.remove('visible-print');
-            clearBtn.style.display = 'none';
         }
-    }
-    
-    // פונקציה לניקוי שדה "אחר" וחזרה לסלקט
-    function clearOtherInput(btn) {
-        const wrapper = btn.parentElement;
-        const select = wrapper.querySelector('.school-select');
-        const input = wrapper.querySelector('.school-other');
-        
-        select.value = ""; // מאפס בחירה
-        input.value = "";  // מנקה טקסט
-        toggleOtherInput(select); // מחזיר למצב רגיל
-        saveAllData();
     }
 
     function createTypeSelect() { return `<select class="tbl-input exam-input" style="font-weight:bold;">${vehicleTypes.map(v => `<option value="${v}">${v}</option>`).join('')}</select>`; }
@@ -515,7 +488,6 @@
             <select class="tbl-input school-select ${cssClass}" style="text-align:right;" onchange="toggleOtherInput(this)">
                 <option value=""></option>
             </select>
-            <button class="btn-clear-other" onclick="clearOtherInput(this)">✖</button>
             <input type="text" class="tbl-input other-input school-other ${cssClass}" placeholder="הקלד שם..." oninput="saveAllData()">
         </div>`; 
     }
@@ -540,11 +512,17 @@
             <td>${createSchoolCell(true)}</td>
         `;
         tbody.appendChild(row);
+        
         refreshAllSchoolSelects();
+
         row.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
         row.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); savePlanData(); }));
+
         planRowCount = tbody.children.length; 
-        if(save) { localStorage.setItem('plan_rows_count', planRowCount); savePlanData(); }
+        if(save) {
+            localStorage.setItem('plan_rows_count', planRowCount);
+            savePlanData();
+        }
     }
 
     function removePlanRow() {
@@ -553,7 +531,8 @@
             tbody.removeChild(tbody.lastChild); 
             planRowCount = tbody.children.length; 
             localStorage.setItem('plan_rows_count', planRowCount);
-            savePlanData(); calcTotals(); 
+            savePlanData(); 
+            calcTotals(); 
         }
     }
 
@@ -619,19 +598,124 @@
     function initSignature() {
         function getPos(e) {
             const r = canvas.getBoundingClientRect();
-            return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top };
+            return { 
+                x: (e.clientX || e.touches[0].clientX) - r.left, 
+                y: (e.clientY || e.touches[0].clientY) - r.top 
+            };
         }
-        ['mousedown', 'touchstart'].forEach(evt => canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); }));
-        ['mousemove', 'touchmove'].forEach(evt => canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); }));
-        ['mouseup', 'touchend'].forEach(evt => { canvas.addEventListener(evt, () => { drawing = false; localStorage.setItem('main_signature', canvas.toDataURL()); }); });
+
+        ['mousedown', 'touchstart'].forEach(evt => 
+            canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); })
+        );
+        ['mousemove', 'touchmove'].forEach(evt => 
+            canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); })
+        );
+        ['mouseup', 'touchend'].forEach(evt => {
+            canvas.addEventListener(evt, () => { 
+                drawing = false; 
+                localStorage.setItem('main_signature', canvas.toDataURL()); 
+            });
+        });
         
         const savedSig = localStorage.getItem('main_signature');
-        if(savedSig) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0); img.src = savedSig; }
+        if(savedSig) {
+            const img = new Image();
+            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.src = savedSig;
+        }
     }
 
     function clearSig() { 
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
         localStorage.removeItem('main_signature');
+    }
+
+    // --- Outbox Logic (Shared with Failure Form) ---
+    function renderOutbox() {
+        const list = document.getElementById('outbox-list');
+        const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
+        list.innerHTML = '';
+        
+        if(savedMessages.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:#777; font-size:12px;">אין הודעות ממתינות</p>';
+            return;
+        }
+
+        savedMessages.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'outbox-item';
+            div.innerHTML = `
+                <div style="font-size:12px;"><strong>${item.name}</strong> <span style="color:#777">(${item.time})</span></div>
+                <div class="outbox-btn-group">
+                    <button class="btn-whatsapp" onclick="sendSaved(${index})">שלח</button>
+                    <button class="btn-delete" onclick="deleteSaved(${index})">מחק</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function sendSaved(index) {
+        const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
+        const item = savedMessages[index];
+        const url = `https://wa.me/?text=${encodeURIComponent(item.text)}`;
+        window.open(url, '_blank');
+    }
+
+    function deleteSaved(index) {
+        let savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
+        savedMessages.splice(index, 1);
+        localStorage.setItem('whatsapp_outbox', JSON.stringify(savedMessages));
+        renderOutbox();
+    }
+
+    function clearOutbox() {
+        if(confirm('למחוק את כל ההודעות השמורות?')) {
+            localStorage.removeItem('whatsapp_outbox');
+            renderOutbox();
+        }
+    }
+
+    // --- רשימת עוברים מרוכזת (חדש!) ---
+    function generatePassList() {
+        const rows = document.querySelectorAll('#examTableBody tr');
+        const passBySchool = {};
+        const date = document.getElementById('dateInput').value || 'היום';
+        const areaSelect = document.getElementById('areaSelect');
+        const area = areaSelect.options[areaSelect.selectedIndex].text;
+
+        rows.forEach(row => {
+            // סלקטורים: 0=School(Select), 1=School(Input) ... 4=Name ... 8=Result
+            const inputs = row.querySelectorAll('input, select');
+            if(inputs.length < 9) return;
+
+            const schoolSel = inputs[0]; // Select
+            // הכפתור הוא האח, האינפוט הוא האח השני
+            const schoolInput = schoolSel.parentElement.querySelector('.school-other');
+            
+            const schoolName = (schoolSel.value === 'other' ? schoolInput.value : schoolSel.value).trim();
+            const studentName = inputs[4].value.trim();
+            const result = inputs[8].value; // עמודה 9 היא התוצאה
+
+            if(result === 'עבר' && schoolName && studentName) {
+                if(!passBySchool[schoolName]) passBySchool[schoolName] = [];
+                passBySchool[schoolName].push(studentName);
+            }
+        });
+
+        if(Object.keys(passBySchool).length === 0) {
+            alert('לא נמצאו תלמידים שעברו, או שחסרים פרטי בי"ס/שם.');
+            return;
+        }
+
+        let msg = `*רשימת עוברים - ${date} - ${area}*\n`;
+        for (const [school, students] of Object.entries(passBySchool)) {
+            msg += `\n🚗 *${school}*\n`;
+            students.forEach(st => msg += `✅ ${st}\n`);
+        }
+
+        const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
     }
 
     function resetForm() { if(confirm('לנקות הכל?')) { localStorage.clear(); location.reload(); } }
