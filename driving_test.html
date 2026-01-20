@@ -5,90 +5,40 @@
     <title>טופס מבחן נהיגה - צה"ל - משרד הרישוי</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; padding: 20px; direction: rtl; }
-        
-        /* מיכל הטופס */
-        .form-container { 
-            max-width: 1100px; margin: auto; background: white; padding: 30px; 
-            border: 2px solid #000; box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-        }
-        
+        .form-container { max-width: 1100px; margin: auto; background: white; padding: 30px; border: 2px solid #000; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         .header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 10px; padding-bottom: 5px; }
         .header h1 { margin: 0; font-size: 24px; color: #1a3a1a; }
         .header h2 { margin: 2px 0; font-size: 18px; }
-
         .top-info { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
         .vehicle-types { font-size: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; border: 1px solid #ccc; padding: 5px; background: #f9f9f9; }
-        
         .details-section { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 15px; background: #fdfdfd; padding: 5px; border: 1px solid #eee; }
         .field { display: flex; flex-direction: column; gap: 2px; }
         .field label { font-weight: bold; font-size: 11px; color: #555; }
-        input[type="text"], input[type="date"], input[type="time"] { 
-            border: 1px solid #ccc; border-radius: 3px; width: 100%; padding: 4px; 
-            font-family: inherit; font-size: 13px; font-weight: bold; background: #fff;
-        }
-
+        input[type="text"], input[type="date"], input[type="time"] { border: 1px solid #ccc; border-radius: 3px; width: 100%; padding: 4px; font-family: inherit; font-size: 13px; font-weight: bold; background: #fff; }
         .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 2px solid #000; }
         .column { border: 0.5px solid #000; display: flex; flex-direction: column; }
         .column-title { background: #333; color: #fff; font-weight: bold; text-align: center; padding: 5px; border-bottom: 2px solid #000; font-size: 14px; }
-        
         .row-item { display: flex; align-items: center; border-bottom: 1px solid #ccc; padding: 2px 5px; min-height: 28px; page-break-inside: avoid; flex-wrap: wrap; }
         .label-text { flex: 1; font-size: 12px; font-weight: 500; line-height: 1.1; min-width: 120px; }
-        
         .score-select { width: 60px; font-size: 11px; margin-left: 5px; border: 1px solid #ccc; cursor: pointer; height: 22px; }
-        
-        /* סלקט הנימוקים */
-        .reason-select {
-            display: none; 
-            width: 100%; margin-top: 4px; font-size: 12px; font-weight: bold;
-            color: #b00; border: 1px solid #ffcccc; background: #fff5f5; padding: 3px;
-        }
-
+        .reason-select { display: none; width: 100%; margin-top: 4px; font-size: 12px; font-weight: bold; color: #b00; border: 1px solid #ffcccc; background: #fff5f5; padding: 3px; }
         .visual-box { width: 22px; height: 22px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; background: #fff; margin-right: 5px; flex-shrink: 0; }
-        .v-mark { color: green; }
-        .x-mark { color: red; }
-        .ox-mark { color: red; width: 16px; height: 16px; border: 2px solid red; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
-
+        .v-mark { color: green; } .x-mark { color: red; } .ox-mark { color: red; width: 16px; height: 16px; border: 2px solid red; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
         .footer { margin-top: 10px; display: flex; gap: 15px; }
-        .notes-area { 
-            flex: 2; min-height: 80px; height: auto;
-            border: 1px solid #000; padding: 5px; font-family: inherit; resize: none; 
-            font-size: 13px; line-height: 1.4; background: #fffff0; overflow: hidden;
-        }
-        
+        .notes-area { flex: 2; min-height: 80px; height: auto; border: 1px solid #000; padding: 5px; font-family: inherit; resize: none; font-size: 13px; line-height: 1.4; background: #fffff0; overflow: hidden; }
         .summary-box { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 5px; }
         .fail-stamp { border: 3px solid red; color: red; padding: 2px 10px; text-align: center; font-size: 20px; font-weight: bold; transform: rotate(-3deg); align-self: center; }
-
         .digital-sig-box { text-align: center; border: 1px dashed #999; padding: 2px; background: #fff; }
         canvas { cursor: crosshair; display: block; margin: 0 auto; }
         .clear-btn { background: #eee; border: 1px solid #ccc; font-size: 10px; padding: 2px 5px; cursor: pointer; margin-top: 2px; width: 100%; }
-
-        .bottom-actions { text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn-action { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 14px; color: white; display: flex; align-items: center; gap: 5px; }
-        .btn-print { background: #c00; }
-        .btn-back { background: #555; }
-        .btn-whatsapp { background: #25D366; }
-        .btn-later { background: #ff9800; color: #000; } /* כתום לשמירה */
-        
-        /* עיצוב אזור "דואר יוצא" */
-        #outbox-container {
-            margin-top: 30px; border-top: 2px dashed #999; padding-top: 20px;
-            display: none; /* מוסתר כברירת מחדל */
-        }
-        .outbox-item {
-            background: #fff; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .outbox-info { font-size: 14px; font-weight: bold; }
-        .outbox-actions button { margin-left: 5px; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; color: white; font-weight: bold;}
-        .btn-send-now { background: #25D366; }
-        .btn-delete { background: #c00; }
-
+        .bottom-actions { text-align: center; margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-action { padding: 12px 25px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; color: white; display: flex; align-items: center; gap: 5px; }
+        .btn-print { background: #c00; } .btn-back { background: #555; } .btn-whatsapp { background: #25D366; } .btn-later { background: #ff9800; color: #000; }
         @media print { 
             @page { size: A4 landscape; margin: 5mm; }
             body { padding: 0; background: white; margin: 0; -webkit-print-color-adjust: exact; } 
             .form-container { border: none; box-shadow: none; width: 100%; max-width: 100%; padding: 0; } 
-            .no-print, .bottom-actions, .score-select, .clear-btn, .reason-select, #outbox-container { display: none !important; } 
+            .no-print, .bottom-actions, .score-select, .clear-btn, .reason-select { display: none !important; } 
             .row-item { min-height: 20px; padding: 1px 4px; }
             .notes-area { border: 1px solid #000; overflow: visible; }
         }
@@ -160,36 +110,15 @@
     </div>
     
     <div class="bottom-actions no-print">
-        <button class="btn-action btn-whatsapp" onclick="sendWhatsApp(false)">
-            📱 שלח מיידית
-        </button>
-        <button class="btn-action btn-later" onclick="saveToOutbox()">
-            ⏳ שמור לשליחה מאוחרת
-        </button>
-        <button class="btn-action btn-print" onclick="window.print()">🖨️ שמור PDF</button>
-        <button class="btn-action btn-back" onclick="window.close()">✖ סגור</button>
-    </div>
-
-    <div id="outbox-container" class="no-print">
-        <h3 style="text-align:center;">📋 רשימת הודעות ממתינות לשליחה</h3>
-        <div style="text-align:center; margin-bottom:10px;">
-            <button onclick="toggleOutbox()" style="background:#555; color:white; border:none; padding:5px; border-radius:3px;">הסתר / הצג רשימה</button>
-            <button onclick="clearOutbox()" style="background:#c00; color:white; border:none; padding:5px; border-radius:3px;">נקה הכל</button>
-        </div>
-        <div id="outbox-list"></div>
-    </div>
-    
-    <div style="text-align:center; margin-top:10px;" class="no-print">
-        <button onclick="toggleOutbox()" style="background:none; border:none; color:#555; text-decoration:underline; cursor:pointer;">
-            📂 פתח תיבת דואר יוצא (הודעות שמורות)
-        </button>
+        <button class="btn-action btn-whatsapp" onclick="sendWhatsApp(false)">📱 שלח מיידית</button>
+        <button class="btn-action btn-later" onclick="saveToOutbox()">⏳ שמור לשליחה מאוחרת</button>
+        <button class="btn-action btn-print" onclick="window.print()">🖨️ הדפס / שמור PDF</button>
+        <button class="btn-action btn-back" onclick="window.close()">✖ סגור וחזור</button>
     </div>
 </div>
 
 <script>
-    // --- בנק משפטים חכם ---
     const reasonsDB = {
-        // --- עמודה א' - שליטה ---
         "1. התחלת נסיעה": ["דימום מנוע חוזר ונשנה בתחילת נסיעה","השתהות יתר ביציאה מהמקום","התחלת נסיעה קופצנית / חוסר תאום בן מאיץ למצמד"],
         "2. שליטה בהגה": ["אחיזת הגה שגויה / רפויה","חוסר יציבות בנתיב (זיגזג)","סטייה מנתיב ללא איתות או צורך","הפניות הגה מעבר לנדרש (היגוי יתר/חד)","תיקוני הגה מוגזמים בפניות"],
         "3. שימוש במצמד/גלישה": ["שימוש יתר/מיותר במצמד","גלישה מסוכנת לתוך צומת","העלאת הילוך ללא הפרדה (חריקה)","רגל נחה על המצמד בזמן נסיעה"],
@@ -205,8 +134,6 @@
         "13. אביזרי בטיחות": ["אי חגירת חגורה / אי כיוון מראות ומושב"],
         "14. נסיעה לאחור בזווית": ["סטייה מהנתיב בנסיעה לאחור"],
         "15. התרת ורתימת גרור": ["סדר פעולות שגוי/לא בטיחותי בחיבור גרור"],
-
-        // --- עמודה ב' - תנועה ---
         "1. זהירות": ["פניה בצומת קמץ ללא האטה ובדיקה מספקת (קלות ראש)","נהיגה בחוסר זהירות כללי","חוסר תשומת לב לנעשה בדרך (התערבות למניעת תאונה)"],
         "2. הסתכלות": ["הנבחן מתקרב למעגל ויוצא ללא בדיקה לימין/מראות","חציית צמתים ללא בדיקה מוקדמת בזרועות הצומת","מבט מקובע לפנים / אי סריקת צמתים","שימוש מינימלי במראות במעבר נתיב ולקראת פניה"],
         "3. שימוש במראות": ["פניה ימינה ללא בדיקת מראה ימנית (לפני/במהלך/אחרי)","מעבר לנתיב שמאל ללא בדיקת מראה שמאלית","אי שימוש במראות לפני בלימה/פניה"],
@@ -219,8 +146,6 @@
         "10. עקיפות/נאקף": ["חוסר זהירות בעקיפה / הפרעה לתנועה ממול","עקיפת רכב עומד ללא בדיקת מראה ימנית בחזרה","לא שם לב שנעקף ולא איפשר חזרה (האצה)","עקיפה בדרך לא פנויה/מסוכנת"],
         "11. נהיגת לילה/אורות": ["אי הדלקת אורות / סינוור רכב ממול"],
         "12. ירידה לשול": ["ירידה מסוכנת לשול / חזרה לא זהירה לכביש"],
-
-        // --- עמודה ג' - הדרך ---
         "1. פניות ימינה": ["פניה ימינה בקשת רחבה וגלישה לנתיב נגדי (התערבות)","עליה על מדרכה בפניה ימינה","כניסה לנתיב לא נכון בפניה","פניה ימינה שלא עפ\"י הסימון בדרך"],
         "2. פניות שמאלה": ["ניסיון פניה שמאלה לנתיב הנגדי (התערבות)","פניה שמאלה בקשת קצרה מידי (סיכון אי תנועה/תמרור)","עליה על אי תנועה בפניה שמאלה","פניה שמאלה לחד סטרי - לא לנתיב השמאלי","פניה שמאלה מחד סטרי - לא מהצד השמאלי","ניסיון לפנות שמאלה מנתיב לא נכון"],
         "3. מיקום במפגשים": ["חציית צומת בחוסר זהירות ללא בקרה מספקת","חוסר ידע בסדרי תנועה בצומת (זכות קדימה)","כניסה לצומת לא פנוי (חסימת התנועה)","עצירה בתוך הצומת"],
@@ -239,6 +164,9 @@
     const dataB = Object.keys(reasonsDB).slice(15, 27);
     const dataC = Object.keys(reasonsDB).slice(27);
 
+    // סט לשמירת הסיבות שנבחרו (מונע כפילות ומאפשר מחיקה)
+    const selectedReasons = new Set();
+
     function renderColumn(id, list) {
         const container = document.getElementById(id);
         list.forEach(item => {
@@ -251,7 +179,7 @@
             div.innerHTML = `
                 <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
                     <span class="label-text">${item}</span>
-                    <select class="reason-select" onchange="updateNotes()">
+                    <select class="reason-select" id="reason-${item}" onchange="toggleReason(this, '${item}')">
                         ${options}<option value="אחר">הקלדה ידנית / אחר</option>
                     </select>
                 </div>
@@ -282,37 +210,47 @@
         } else {
             reasonSelect.style.display = 'none'; reasonSelect.value = "";
         }
-        updateNotes();
+    }
+
+    // פונקציה חכמה להוספה/הסרה של משפטים
+    function toggleReason(selectElem, category) {
+        const val = selectElem.value;
+        if (!val) return;
+
+        const rawLabel = selectElem.parentElement.querySelector('.label-text').innerText;
+        const cleanLabel = rawLabel.replace(/^\d+\.\s*/, '');
+        
+        let formattedReason = "";
+        if (val === "אחר") formattedReason = `• ${cleanLabel}: `;
+        else formattedReason = `• ${cleanLabel}: ${val}`;
+
+        const notesArea = document.getElementById('finalNotes');
+        let currentText = notesArea.value;
+
+        // בדיקה אם המשפט קיים
+        if (currentText.includes(formattedReason)) {
+            // אם קיים - מוחק אותו
+            currentText = currentText.replace(formattedReason + '\n', '');
+            currentText = currentText.replace(formattedReason, ''); // מקרה קצה של שורה אחרונה
+        } else {
+            // אם לא קיים - מוסיף אותו
+            if(currentText && !currentText.endsWith('\n')) currentText += '\n';
+            currentText += formattedReason + '\n';
+        }
+
+        notesArea.value = currentText;
+        selectElem.value = ""; // מאפס את הסלקט כדי לאפשר בחירה חוזרת
+        autoResize(notesArea);
     }
 
     function autoResize(textarea) {
         textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight + 5) + 'px'; 
     }
 
-    function updateNotes() {
-        const selects = document.querySelectorAll('.reason-select');
-        let notesText = "";
-        selects.forEach(sel => {
-            if (sel.style.display !== 'none' && sel.value && sel.value !== "") {
-                const rawLabel = sel.parentElement.querySelector('.label-text').innerText;
-                const cleanLabel = rawLabel.replace(/^\d+\.\s*/, ''); 
-                const reason = sel.value;
-                if (reason === "אחר") notesText += `• ${cleanLabel}: \n`;
-                else notesText += `• ${cleanLabel}: ${reason}\n`;
-            }
-        });
-        const notesArea = document.getElementById('finalNotes');
-        notesArea.value = notesText;
-        autoResize(notesArea);
-    }
-
-    // --- לוגיקה לשליחה וניהול Outbox ---
-    
-    // שליחה מיידית (ללא שמירה)
     function sendWhatsApp(textOnly) {
         const nameFirst = document.getElementById('targetFirstName').value || '';
         const nameLast = document.getElementById('targetLastName').value || '';
-        const idNum = document.getElementById('targetID').value || '';
+        const school = document.getElementById('targetSchool').value || '';
         const tester = document.getElementById('targetTester').value || '';
         const notes = document.getElementById('finalNotes').value || 'אין הערות מיוחדות';
         const fullName = `${nameFirst} ${nameLast}`;
@@ -321,98 +259,27 @@
 
         let msg = `*תוצאות מבחן נהיגה - נכשל* ❌\n`;
         msg += `שם הנבחן: ${fullName}\n`;
-        if(idNum) msg += `ת.ז: ${idNum}\n`;
+        if(school) msg += `בי"ס: ${school}\n`;
         if(tester) msg += `בוחן: ${tester}\n`;
         msg += `----------------\n`;
         msg += `*פירוט הליקויים:*\n${notes}\n`;
         msg += `----------------\n`;
         msg += `תאריך: ${new Date().toLocaleDateString('he-IL')}`;
         
+        if(textOnly) return msg;
         const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-        
-        if(textOnly) return msg; // לשימוש פנימי
         window.open(url, '_blank');
     }
 
-    // שמירה לרשימת המתנה
     function saveToOutbox() {
-        const msg = sendWhatsApp(true); // מקבל את הטקסט
+        const msg = sendWhatsApp(true);
         if(!msg) return;
-        
         const fullName = document.getElementById('targetFirstName').value + ' ' + document.getElementById('targetLastName').value;
         const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        
-        savedMessages.push({
-            name: fullName,
-            text: msg,
-            time: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'})
-        });
-        
+        savedMessages.push({ name: fullName, text: msg, time: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'}) });
         localStorage.setItem('whatsapp_outbox', JSON.stringify(savedMessages));
-        alert('ההודעה נשמרה בתיבת דואר יוצא!\nתוכל לשלוח אותה מאוחר יותר.');
-        renderOutbox();
-        document.getElementById('outbox-container').style.display = 'block';
-    }
-
-    // הצגת הרשימה
-    function renderOutbox() {
-        const list = document.getElementById('outbox-list');
-        const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        list.innerHTML = '';
-        
-        if(savedMessages.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:#777;">אין הודעות ממתינות</p>';
-            return;
-        }
-
-        savedMessages.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'outbox-item';
-            div.innerHTML = `
-                <div class="outbox-info">${index+1}. ${item.name} (${item.time})</div>
-                <div class="outbox-actions">
-                    <button class="btn-send-now" onclick="sendSaved(${index})">שלח</button>
-                    <button class="btn-delete" onclick="deleteSaved(${index})">מחק</button>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-    }
-
-    function sendSaved(index) {
-        const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        const item = savedMessages[index];
-        const url = `https://wa.me/?text=${encodeURIComponent(item.text)}`;
-        window.open(url, '_blank');
-        
-        // אופציונלי: למחוק אחרי שליחה? עדיף ידני כדי לוודא
-        if(confirm('האם למחוק מהרשימה לאחר השליחה?')) {
-            deleteSaved(index);
-        }
-    }
-
-    function deleteSaved(index) {
-        let savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
-        savedMessages.splice(index, 1);
-        localStorage.setItem('whatsapp_outbox', JSON.stringify(savedMessages));
-        renderOutbox();
-    }
-
-    function clearOutbox() {
-        if(confirm('למחוק את כל ההודעות השמורות?')) {
-            localStorage.removeItem('whatsapp_outbox');
-            renderOutbox();
-        }
-    }
-
-    function toggleOutbox() {
-        const container = document.getElementById('outbox-container');
-        if(container.style.display === 'none' || container.style.display === '') {
-            container.style.display = 'block';
-            renderOutbox();
-        } else {
-            container.style.display = 'none';
-        }
+        alert('ההודעה נשמרה בתיבת דואר יוצא!\nניתן לשלוח אותה מהמסך הראשי.');
+        window.close(); // סוגר את החלון אחרי שמירה
     }
 
     renderColumn('colA', dataA);
@@ -422,31 +289,19 @@
     const canvas = document.getElementById('sig-canvas');
     const ctx = canvas.getContext('2d');
     let drawing = false;
-
-    function getPos(e) {
-        const r = canvas.getBoundingClientRect();
-        return { 
-            x: (e.clientX || e.touches[0].clientX) - r.left, 
-            y: (e.clientY || e.touches[0].clientY) - r.top 
-        };
-    }
-
-    ['mousedown', 'touchstart'].forEach(evt => 
-        canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); })
-    );
-    ['mousemove', 'touchmove'].forEach(evt => 
-        canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); })
-    );
-    ['mouseup', 'touchend'].forEach(evt => canvas.addEventListener(evt, () => drawing = false));
-
+    const getPos = (e) => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top }; };
+    canvas.addEventListener('mousedown', (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); });
+    canvas.addEventListener('mousemove', (e) => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); });
+    canvas.addEventListener('mouseup', () => { drawing = false; });
+    canvas.addEventListener('touchstart', (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); e.preventDefault(); });
+    canvas.addEventListener('touchmove', (e) => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); e.preventDefault(); });
+    canvas.addEventListener('touchend', () => { drawing = false; });
     function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
     function updatePageTitle() {
         const first = document.getElementById('targetFirstName').value;
         const last = document.getElementById('targetLastName').value;
-        if(first || last) {
-            document.title = "כישלון - " + first + " " + last;
-        }
+        if(first || last) document.title = "כישלון - " + first + " " + last;
     }
 
     window.onload = function() {
@@ -469,9 +324,6 @@
             }
             updatePageTitle();
         }
-        
-        // טעינת רשימת המתנה אם קיימת
-        renderOutbox();
     };
 </script>
 
