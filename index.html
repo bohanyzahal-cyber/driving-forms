@@ -203,7 +203,7 @@
 <body>
 
 <div class="floating-controls">
-    <button class="btn-print" onclick="window.print()">🖨️ שמור PDF</button>
+    <button class="btn-print" onclick="saveWithSmartName()">🖨️ שמור PDF</button>
     <button class="btn-reset" onclick="resetForm()">🔄 נקה הכל</button>
     <button class="btn-pass-list" onclick="generatePassList()">🏆 צור רשימות עוברים לשליחה</button>
 </div>
@@ -797,7 +797,32 @@
     }
 
     function resetForm() { if(confirm('לנקות הכל?')) { localStorage.clear(); location.reload(); } }
+// --- פונקציה לשמירה עם שם חכם ---
+    function saveWithSmartName() {
+        // משיכת הנתונים
+        const dateVal = document.getElementById('dateInput').value || 'ללא_תאריך';
+        const areaSelect = document.getElementById('areaSelect');
+        let areaName = 'כללי';
+        
+        // בדיקה אם נבחר אזור
+        if (areaSelect.selectedIndex > 0) {
+            areaName = areaSelect.options[areaSelect.selectedIndex].text;
+        }
 
+        // ניקוי תווים בעייתיים (החלפת לוכסנים במקפים למניעת שגיאות בשם הקובץ)
+        // לדוגמה: 21/01/2026 יהפוך ל- 21-01-2026
+        const safeDate = dateVal.replace(/\//g, '-').replace(/\./g, '-');
+        const safeArea = areaName.replace(/["']/g, ''); // הסרת גרשיים אם יש
+
+        // שינוי כותרת הדף (זה מה שקובע את שם הקובץ)
+        document.title = `סידור_עבודה_${safeArea}_${safeDate}`;
+
+        // ביצוע ההדפסה
+        window.print();
+        
+        // (אופציונלי) החזרת הכותרת למצב רגיל אחרי שניה, אם רוצים
+        // setTimeout(() => { document.title = 'סידור עבודה ודוח בוחן'; }, 1000);
+    }
 </script>
 </body>
 </html>
