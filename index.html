@@ -691,17 +691,18 @@
     }
 
     // --- רשימת עוברים מרוכזת (מפוצלת לפי בתי ספר) ---
-    function generatePassList() {
+   function generatePassList() {
         const rows = document.querySelectorAll('#examTableBody tr');
         const passBySchool = {};
         const date = document.getElementById('dateInput').value || 'היום';
         const areaSelect = document.getElementById('areaSelect');
         const area = areaSelect.options[areaSelect.selectedIndex].text;
+        // משיכת שם הבוחן
+        const testerName = document.getElementById('testersInput').value;
 
         rows.forEach(row => {
             const inputs = row.querySelectorAll('input, select');
             const schoolSel = inputs[0]; 
-            // הכפתור הוא האח הראשון, האינפוט הוא האח השני
             const schoolInput = schoolSel.parentElement.querySelector('.school-other');
             
             const schoolName = (schoolSel.value === 'other' ? schoolInput.value : schoolSel.value).trim();
@@ -724,10 +725,13 @@
         
         for (const [school, students] of Object.entries(passBySchool)) {
             let msg = `*רשימת עוברים - ${date} - ${area}*\n`;
+            
+            // הוספת שם הבוחן להודעה
+            if(testerName) msg += `👮‍♂️ *בוחן: ${testerName}*\n`;
+            
             msg += `\n🚗 *${school}*\n`;
             students.forEach(st => msg += `✅ ${st}\n`);
             
-            // יצירת כפתור לכל בית ספר
             const btn = document.createElement('button');
             btn.className = 'btn-whatsapp';
             btn.style.marginBottom = '5px';
@@ -740,7 +744,6 @@
         }
         
         document.getElementById('pass-list-section').style.display = 'block';
-        // גלילה למטה לאזור הכפתורים
         document.getElementById('pass-list-section').scrollIntoView({ behavior: 'smooth' });
     }
 
