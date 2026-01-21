@@ -292,4 +292,61 @@
         btn.style.background = "#28a745";
         
         setTimeout(() => {
-            btn.innerText =
+            btn.innerText = originalText;
+            btn.style.background = "#ff9800";
+        }, 3000);
+    }
+    
+    function safeClose() {
+        if(isSaved || confirm('לא שמרת או שלחת את הטופס. האם לצאת בכל זאת?')) {
+            window.close();
+        }
+    }
+
+    renderColumn('colA', dataA);
+    renderColumn('colB', dataB);
+    renderColumn('colC', dataC);
+
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    const getPos = (e) => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top }; };
+    canvas.addEventListener('mousedown', (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); });
+    canvas.addEventListener('mousemove', (e) => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); });
+    canvas.addEventListener('mouseup', () => { drawing = false; });
+    canvas.addEventListener('touchstart', (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); e.preventDefault(); });
+    canvas.addEventListener('touchmove', (e) => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); e.preventDefault(); });
+    canvas.addEventListener('touchend', () => { drawing = false; });
+    function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    function updatePageTitle() {
+        const first = document.getElementById('targetFirstName').value;
+        const last = document.getElementById('targetLastName').value;
+        if(first || last) document.title = "כישלון - " + first + " " + last;
+    }
+
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.has('school')) document.getElementById('targetSchool').value = urlParams.get('school');
+        if(urlParams.has('id')) document.getElementById('targetID').value = urlParams.get('id');
+        if(urlParams.has('car')) document.getElementById('targetCar').value = urlParams.get('car');
+        if(urlParams.has('date')) document.getElementById('targetDate').value = urlParams.get('date');
+        if(urlParams.has('time')) document.getElementById('targetTime').value = urlParams.get('time');
+        if(urlParams.has('tester')) document.getElementById('targetTester').value = urlParams.get('tester');
+
+        if(urlParams.has('name')) {
+            const fullName = urlParams.get('name').trim();
+            const firstSpaceIndex = fullName.indexOf(' ');
+            if (firstSpaceIndex > 0) {
+                document.getElementById('targetFirstName').value = fullName.substring(0, firstSpaceIndex);
+                document.getElementById('targetLastName').value = fullName.substring(firstSpaceIndex + 1);
+            } else {
+                document.getElementById('targetFirstName').value = fullName;
+            }
+            updatePageTitle();
+        }
+    };
+</script>
+
+</body>
+</html>
