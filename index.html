@@ -149,6 +149,55 @@
             
             .general-notes-box { height: auto; border: 1px solid #000; }
         }
+/* --- תיקון למובייל: סרגל כפתורים עליון במקום צף --- */
+        @media screen and (max-width: 768px) {
+            /* שינוי הגוף כדי שהכפתורים יהיו מעל הדף ולא בצד */
+            body {
+                flex-direction: column;
+                align-items: center;
+                padding-top: 0;
+            }
+
+            /* הפיכת הכפתורים מסרגל צד לסרגל עליון */
+            .floating-controls {
+                position: relative; /* מפסיק להיות צף */
+                top: auto;
+                left: auto;
+                width: 100%;
+                flex-direction: row; /* כפתורים בשורה במקום בטור */
+                justify-content: space-between;
+                background-color: #333; /* רקע כהה להפרדה */
+                padding: 10px;
+                box-sizing: border-box;
+                margin-bottom: 15px; /* מרווח כדי שלא יידבק לטופס */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                border-radius: 0;
+                z-index: 9999;
+            }
+
+            /* התאמת הכפתורים ללחיצה נוחה באצבע */
+            .floating-controls button {
+                flex: 1; /* רוחב שווה לכולם */
+                margin: 0 2px;
+                padding: 10px 5px;
+                font-size: 13px;
+                height: auto;
+                white-space: normal; /* מאפשר שבירת שורות אם הטקסט ארוך */
+            }
+
+            /* הסתרת כפתור הרשימות במובייל אם הוא תופס יותר מדי מקום (אופציונלי) */
+            .btn-pass-list {
+                width: auto;
+                margin-top: 0;
+            }
+            
+            /* התאמת הדף עצמו שלא יברח לצדדים */
+            .a4-page {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+        }
     </style>
 </head>
 <body>
