@@ -111,9 +111,9 @@
     
     <div class="bottom-actions no-print">
         <button class="btn-action btn-whatsapp" onclick="sendWhatsApp(false)">📱 שלח מיידית</button>
-        <button class="btn-action btn-later" onclick="saveToOutbox()">⏳ שמור לשליחה מאוחרת</button>
+        <button class="btn-action btn-later" id="btnSaveLater" onclick="saveToOutbox()">⏳ שמור לשליחה מאוחרת</button>
         <button class="btn-action btn-print" onclick="window.print()">🖨️ הדפס / שמור PDF</button>
-        <button class="btn-action btn-back" onclick="window.close()">✖ סגור וחזור</button>
+        <button class="btn-action btn-back" onclick="safeClose()">✖ סגור וחזור</button>
     </div>
 </div>
 
@@ -164,8 +164,11 @@
     const dataB = Object.keys(reasonsDB).slice(15, 27);
     const dataC = Object.keys(reasonsDB).slice(27);
 
-    // סט לשמירת הסיבות שנבחרו (מונע כפילות ומאפשר מחיקה)
-    const selectedReasons = new Set();
+    // מניעת סגירה בטעות
+    let isSaved = false;
+    window.onbeforeunload = function() {
+        if (!isSaved) return "האם אתה בטוח שברצונך לצאת? הנתונים לא נשמרו.";
+    };
 
     function renderColumn(id, list) {
         const container = document.getElementById(id);
@@ -212,7 +215,6 @@
         }
     }
 
-    // פונקציה חכמה להוספה/הסרה של משפטים
     function toggleReason(selectElem, category) {
         const val = selectElem.value;
         if (!val) return;
@@ -227,19 +229,16 @@
         const notesArea = document.getElementById('finalNotes');
         let currentText = notesArea.value;
 
-        // בדיקה אם המשפט קיים
         if (currentText.includes(formattedReason)) {
-            // אם קיים - מוחק אותו
             currentText = currentText.replace(formattedReason + '\n', '');
-            currentText = currentText.replace(formattedReason, ''); // מקרה קצה של שורה אחרונה
+            currentText = currentText.replace(formattedReason, '');
         } else {
-            // אם לא קיים - מוסיף אותו
             if(currentText && !currentText.endsWith('\n')) currentText += '\n';
             currentText += formattedReason + '\n';
         }
 
         notesArea.value = currentText;
-        selectElem.value = ""; // מאפס את הסלקט כדי לאפשר בחירה חוזרת
+        selectElem.value = ""; 
         autoResize(notesArea);
     }
 
@@ -257,9 +256,11 @@
         
         if(!fullName.trim()) { alert('אנא וודא ששם הנבחן מלא'); return; }
 
+        // מבנה ההודעה - ללא ת.ז
         let msg = `*תוצאות מבחן נהיגה - נכשל* ❌\n`;
         msg += `שם הנבחן: ${fullName}\n`;
         if(school) msg += `בי"ס: ${school}\n`;
+        // הוספת אזור אם קיים ב-URL או מקומי, כרגע אין שדה אזור בטופס הזה, נסתמך על בי"ס
         if(tester) msg += `בוחן: ${tester}\n`;
         msg += `----------------\n`;
         msg += `*פירוט הליקויים:*\n${notes}\n`;
@@ -267,8 +268,11 @@
         msg += `תאריך: ${new Date().toLocaleDateString('he-IL')}`;
         
         if(textOnly) return msg;
-        const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        
+        // תיקון סימני שאלה: שימוש ב-api.whatsapp.com
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
+        isSaved = true; // סימון שנשלח/נשמר
     }
 
     function saveToOutbox() {
@@ -278,54 +282,14 @@
         const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
         savedMessages.push({ name: fullName, text: msg, time: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'}) });
         localStorage.setItem('whatsapp_outbox', JSON.stringify(savedMessages));
-        alert('ההודעה נשמרה בתיבת דואר יוצא!\nניתן לשלוח אותה מהמסך הראשי.');
-        window.close(); // סוגר את החלון אחרי שמירה
-    }
-
-    renderColumn('colA', dataA);
-    renderColumn('colB', dataB);
-    renderColumn('colC', dataC);
-
-    const canvas = document.getElementById('sig-canvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    const getPos = (e) => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top }; };
-    canvas.addEventListener('mousedown', (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); });
-    canvas.addEventListener('mousemove', (e) => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); });
-    canvas.addEventListener('mouseup', () => { drawing = false; });
-    canvas.addEventListener('touchstart', (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); e.preventDefault(); });
-    canvas.addEventListener('touchmove', (e) => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); e.preventDefault(); });
-    canvas.addEventListener('touchend', () => { drawing = false; });
-    function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-    function updatePageTitle() {
-        const first = document.getElementById('targetFirstName').value;
-        const last = document.getElementById('targetLastName').value;
-        if(first || last) document.title = "כישלון - " + first + " " + last;
-    }
-
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.has('school')) document.getElementById('targetSchool').value = urlParams.get('school');
-        if(urlParams.has('id')) document.getElementById('targetID').value = urlParams.get('id');
-        if(urlParams.has('car')) document.getElementById('targetCar').value = urlParams.get('car');
-        if(urlParams.has('date')) document.getElementById('targetDate').value = urlParams.get('date');
-        if(urlParams.has('time')) document.getElementById('targetTime').value = urlParams.get('time');
-        if(urlParams.has('tester')) document.getElementById('targetTester').value = urlParams.get('tester');
-
-        if(urlParams.has('name')) {
-            const fullName = urlParams.get('name').trim();
-            const firstSpaceIndex = fullName.indexOf(' ');
-            if (firstSpaceIndex > 0) {
-                document.getElementById('targetFirstName').value = fullName.substring(0, firstSpaceIndex);
-                document.getElementById('targetLastName').value = fullName.substring(firstSpaceIndex + 1);
-            } else {
-                document.getElementById('targetFirstName').value = fullName;
-            }
-            updatePageTitle();
-        }
-    };
-</script>
-
-</body>
-</html>
+        
+        isSaved = true; // מונע הודעת אזהרה ביציאה
+        
+        // שינוי כפתור לחיווי הצלחה
+        const btn = document.getElementById('btnSaveLater');
+        const originalText = btn.innerText;
+        btn.innerText = "✅ נשמר! הטופס פתוח";
+        btn.style.background = "#28a745";
+        
+        setTimeout(() => {
+            btn.innerText =
