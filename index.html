@@ -72,9 +72,18 @@
         input[type="time"]::-webkit-date-and-time-value { text-align: center; }
 
         /* שדה קלט "אחר" מיוחד */
+        .school-wrapper { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         input.other-input { 
-            display: none; border-bottom: 1px dashed #000; background: #fff; 
-            width: 90%; margin: 0 auto; font-size: 11px; height: 20px;
+            display: none; 
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #fff; border: 2px solid #007bff; 
+            text-align: center; font-size: 12px; z-index: 10;
+            box-sizing: border-box;
+        }
+        .btn-clear-other {
+            display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
+            background: #ccc; border: none; font-size: 10px; cursor: pointer; z-index: 11; padding: 2px 5px; border-radius: 50%;
         }
 
         /* הערות כלליות */
@@ -111,16 +120,16 @@
         canvas { border: 1px dashed #999; cursor: crosshair; background: #fff; display: block; margin: 0 auto; }
 
         /* Outbox Styling */
-        #outbox-section { margin-top: 20px; border-top: 2px dashed #999; padding-top: 15px; }
+        #outbox-section, #pass-list-section { margin-top: 20px; border-top: 2px dashed #999; padding-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 5px; }
         .outbox-item { background: #fff; border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
         .outbox-btn-group button { margin-left: 5px; padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; color: white; font-size: 12px; }
-        .btn-whatsapp { background: #25D366; }
+        .btn-whatsapp { background: #25D366; color: white; margin-bottom: 5px; width: 100%; text-align: center; padding: 10px; font-size: 14px; }
         .btn-delete { background: #dc3545; }
 
         /* --- הגדרות הדפסה (A4 מדויק) --- */
         @media print { 
             body { background: white; padding: 0; margin: 0; }
-            .floating-controls, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, .btn-pass-list { display: none !important; }
+            .floating-controls, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, #pass-list-section, .btn-pass-list { display: none !important; }
             
             .a4-page { 
                 box-shadow: none; margin: 0; width: 210mm; height: 297mm; 
@@ -136,6 +145,7 @@
             
             .school-select.hidden-print { display: none; }
             input.other-input.visible-print { display: block; border: none; font-weight: bold; text-align: center;}
+            .btn-clear-other { display: none; }
             
             .general-notes-box { height: auto; border: 1px solid #000; }
         }
@@ -146,7 +156,7 @@
 <div class="floating-controls">
     <button class="btn-print" onclick="window.print()">🖨️ שמור PDF</button>
     <button class="btn-reset" onclick="resetForm()">🔄 נקה הכל</button>
-    <button class="btn-pass-list" onclick="generatePassList()">🏆 שלח רשימת עוברים מרוכזת</button>
+    <button class="btn-pass-list" onclick="generatePassList()">🏆 צור רשימות עוברים לשליחה</button>
 </div>
 
 <div class="a4-page">
@@ -261,8 +271,16 @@
         </div>
     </div>
 
+    <div id="pass-list-section" class="no-print" style="display:none; background:#e8f5e9; border:1px solid #c8e6c9;">
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:#2e7d32;">🏆 שליחת הודעות עוברים (מפוצל לפי בתי ספר)</h3>
+        <div id="pass-list-buttons"></div>
+        <div style="text-align:center; margin-top:5px;">
+            <button onclick="document.getElementById('pass-list-section').style.display='none'" style="background:#777; padding:3px 8px; font-size:11px;">סגור אזור זה</button>
+        </div>
+    </div>
+
     <div id="outbox-section" class="no-print">
-        <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">📬 דואר יוצא (הודעות וואטספ שמורות - נכשלים)</h3>
+        <h3 style="margin:0 0 10px 0; font-size:14px; color:#333;">📬 דואר יוצא (נכשלים שממתינים לשליחה)</h3>
         <div id="outbox-list"></div>
         <div style="text-align:center; margin-top:10px;">
             <button onclick="clearOutbox()" style="background:#555; padding:5px 10px; font-size:11px;">נקה היסטוריה</button>
@@ -297,12 +315,28 @@
         "קרית חיים": ["הקריה", "גל ירוק"],
         "עכו": ["ארגמן", "סמיר", "נתיבי הגליל"],
         "עפולה": ["החמישה", "לין", "ב.ה 6910", "יהב", "שרייבר"],
+        "בית שאן": ["גלבוע"],
         "טבריה": ["האון"],
         "קרית שמונה": ["רוממה גליל", "נמרוד סער"],
         "ירושלים": ["שרייבר", "דרכים", "לג ירושלים", "על גלגלים", "עוז"],
         "בהלץ": ["טרקטור עיוני", "טרקטור מעשי", "בהד 14"],
         "לג תלש": ["תלש עיוני"],
         "ביסט 21": ["ביסט"]
+    };
+
+    const testersDB = {
+        "ויטלי גיטלמן": "ויטלי גיטלמן\nבוחן רישוי צה\"ל\nמס' 3604",
+        "אללוף יצחק": "אללוף יצחק\nבוחן רישוי צה\"ל\nמס' ____",
+        "דרור מלל": "דרור מלל\nבוחן רישוי צה\"ל\nמס' ____",
+        "אלבלה אברהם": "אלבלה אברהם\nבוחן רישוי צה\"ל\nמס' ____",
+        "בני לוי": "בני לוי\nבוחן רישוי צה\"ל\nמס' ____",
+        "שמשון נגאוקר": "שמשון נגאוקר\nבוחן רישוי צה\"ל\nמס' ____",
+        "אלקס קורנבליט": "אלקס קורנבליט\nבוחן רישוי צה\"ל\nמס' ____",
+        "צרימי שרון": "צרימי שרון\nבוחן רישוי צה\"ל\nמס' ____",
+        "יניר נאוגאוקר": "יניר נאוגאוקר\nבוחן רישוי צה\"ל\nמס' ____",
+        "דודו פלס": "דודו פלס\nבוחן רישוי צה\"ל\nמס' ____",
+        "רון יהוד": "רון יהוד\nבוחן רישוי צה\"ל\nמס' ____",
+        "לוי בנימין": "לוי בנימין\nבוחן רישוי צה\"ל\nמס' ____"
     };
 
     const vehicleTypes = ['','1','A1','A','B','C1','C','E','D'];
@@ -373,7 +407,7 @@
         }
         
         refreshAllSchoolSelects();
-
+        
         document.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
         document.querySelectorAll('.exam-input').forEach(el => el.addEventListener('input', saveExamData));
         document.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); saveAllData(); }));
@@ -381,29 +415,23 @@
     }
 
     function saveAllData() { savePlanData(); saveExamData(); }
-
     function savePlanData() {
         const inputs = document.querySelectorAll('#planningTableBody input, #planningTableBody select');
         const vals = Array.from(inputs).map(el => el.value);
         localStorage.setItem('data_plan_table', JSON.stringify(vals));
     }
-
     function saveExamData() {
         const inputs = document.querySelectorAll('#examTableBody input, #examTableBody select');
         const vals = Array.from(inputs).map(el => el.value);
         localStorage.setItem('data_exam_table', JSON.stringify(vals));
     }
-
     function saveHeader() {
         updateHeader();
         localStorage.setItem('header_day', document.getElementById('daySelect').value);
         localStorage.setItem('header_date', document.getElementById('dateInput').value);
         localStorage.setItem('header_testers', document.getElementById('testersInput').value);
     }
-    
-    function saveNotes() {
-        localStorage.setItem('general_notes', document.getElementById('generalNotes').value);
-    }
+    function saveNotes() { localStorage.setItem('general_notes', document.getElementById('generalNotes').value); }
 
     function loadDataIntoTables() {
         const planData = JSON.parse(localStorage.getItem('data_plan_table'));
@@ -416,7 +444,6 @@
                 }
             });
         }
-
         const examData = JSON.parse(localStorage.getItem('data_exam_table'));
         if (examData) {
             const examInputs = document.querySelectorAll('#examTableBody input, #examTableBody select');
@@ -433,9 +460,7 @@
     function initAreaSelect() {
         const sel = document.getElementById('areaSelect');
         sel.innerHTML = '<option value="">בחר אזור...</option>';
-        Object.keys(schoolMap).sort().forEach(area => {
-            sel.innerHTML += `<option value="${area}">${area}</option>`;
-        });
+        Object.keys(schoolMap).sort().forEach(area => { sel.innerHTML += `<option value="${area}">${area}</option>`; });
         sel.innerHTML += `<option value="other">אחר...</option>`;
     }
 
@@ -457,26 +482,37 @@
         document.querySelectorAll('.school-select').forEach(selectElem => {
             const currentVal = selectElem.value;
             selectElem.innerHTML = opts;
-            if (currentVal && (schools.includes(currentVal) || currentVal === 'other')) {
-                selectElem.value = currentVal;
-            } else {
-                selectElem.value = "";
-            }
+            if (currentVal && (schools.includes(currentVal) || currentVal === 'other')) selectElem.value = currentVal;
+            else selectElem.value = "";
             toggleOtherInput(selectElem);
         });
     }
 
     function toggleOtherInput(selectElem) {
-        const inputElem = selectElem.nextElementSibling;
+        const inputElem = selectElem.nextElementSibling.nextElementSibling;
+        const clearBtn = selectElem.nextElementSibling;
+        
         if(selectElem.value === 'other') {
             inputElem.style.display = 'block';
             selectElem.classList.add('hidden-print');
             inputElem.classList.add('visible-print');
+            clearBtn.style.display = 'block';
         } else {
             inputElem.style.display = 'none';
             selectElem.classList.remove('hidden-print');
             inputElem.classList.remove('visible-print');
+            clearBtn.style.display = 'none';
         }
+    }
+    
+    function clearOtherInput(btn) {
+        const wrapper = btn.parentElement;
+        const select = wrapper.querySelector('.school-select');
+        const input = wrapper.querySelector('.school-other');
+        select.value = ""; 
+        input.value = ""; 
+        toggleOtherInput(select); 
+        saveAllData();
     }
 
     function createTypeSelect() { return `<select class="tbl-input exam-input" style="font-weight:bold;">${vehicleTypes.map(v => `<option value="${v}">${v}</option>`).join('')}</select>`; }
@@ -488,6 +524,7 @@
             <select class="tbl-input school-select ${cssClass}" style="text-align:right;" onchange="toggleOtherInput(this)">
                 <option value=""></option>
             </select>
+            <button class="btn-clear-other" onclick="clearOtherInput(this)">✖</button>
             <input type="text" class="tbl-input other-input school-other ${cssClass}" placeholder="הקלד שם..." oninput="saveAllData()">
         </div>`; 
     }
@@ -512,17 +549,11 @@
             <td>${createSchoolCell(true)}</td>
         `;
         tbody.appendChild(row);
-        
         refreshAllSchoolSelects();
-
         row.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
         row.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); savePlanData(); }));
-
         planRowCount = tbody.children.length; 
-        if(save) {
-            localStorage.setItem('plan_rows_count', planRowCount);
-            savePlanData();
-        }
+        if(save) { localStorage.setItem('plan_rows_count', planRowCount); savePlanData(); }
     }
 
     function removePlanRow() {
@@ -531,8 +562,7 @@
             tbody.removeChild(tbody.lastChild); 
             planRowCount = tbody.children.length; 
             localStorage.setItem('plan_rows_count', planRowCount);
-            savePlanData(); 
-            calcTotals(); 
+            savePlanData(); calcTotals(); 
         }
     }
 
@@ -598,31 +628,14 @@
     function initSignature() {
         function getPos(e) {
             const r = canvas.getBoundingClientRect();
-            return { 
-                x: (e.clientX || e.touches[0].clientX) - r.left, 
-                y: (e.clientY || e.touches[0].clientY) - r.top 
-            };
+            return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top };
         }
-
-        ['mousedown', 'touchstart'].forEach(evt => 
-            canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); })
-        );
-        ['mousemove', 'touchmove'].forEach(evt => 
-            canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); })
-        );
-        ['mouseup', 'touchend'].forEach(evt => {
-            canvas.addEventListener(evt, () => { 
-                drawing = false; 
-                localStorage.setItem('main_signature', canvas.toDataURL()); 
-            });
-        });
+        ['mousedown', 'touchstart'].forEach(evt => canvas.addEventListener(evt, e => { drawing = true; ctx.beginPath(); ctx.moveTo(getPos(e).x, getPos(e).y); if(evt=='touchstart') e.preventDefault(); }));
+        ['mousemove', 'touchmove'].forEach(evt => canvas.addEventListener(evt, e => { if(!drawing)return; ctx.lineTo(getPos(e).x, getPos(e).y); ctx.stroke(); if(evt=='touchmove') e.preventDefault(); }));
+        ['mouseup', 'touchend'].forEach(evt => { canvas.addEventListener(evt, () => { drawing = false; localStorage.setItem('main_signature', canvas.toDataURL()); }); });
         
         const savedSig = localStorage.getItem('main_signature');
-        if(savedSig) {
-            const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0);
-            img.src = savedSig;
-        }
+        if(savedSig) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0); img.src = savedSig; }
     }
 
     function clearSig() { 
@@ -630,7 +643,7 @@
         localStorage.removeItem('main_signature');
     }
 
-    // --- Outbox Logic (Shared with Failure Form) ---
+    // --- Outbox Logic ---
     function renderOutbox() {
         const list = document.getElementById('outbox-list');
         const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
@@ -658,7 +671,8 @@
     function sendSaved(index) {
         const savedMessages = JSON.parse(localStorage.getItem('whatsapp_outbox')) || [];
         const item = savedMessages[index];
-        const url = `https://wa.me/?text=${encodeURIComponent(item.text)}`;
+        // שימוש ב-api.whatsapp.com
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(item.text)}`;
         window.open(url, '_blank');
     }
 
@@ -676,7 +690,7 @@
         }
     }
 
-    // --- רשימת עוברים מרוכזת (חדש!) ---
+    // --- רשימת עוברים מרוכזת (מפוצלת לפי בתי ספר) ---
     function generatePassList() {
         const rows = document.querySelectorAll('#examTableBody tr');
         const passBySchool = {};
@@ -685,17 +699,14 @@
         const area = areaSelect.options[areaSelect.selectedIndex].text;
 
         rows.forEach(row => {
-            // סלקטורים: 0=School(Select), 1=School(Input) ... 4=Name ... 8=Result
             const inputs = row.querySelectorAll('input, select');
-            if(inputs.length < 9) return;
-
-            const schoolSel = inputs[0]; // Select
-            // הכפתור הוא האח, האינפוט הוא האח השני
+            const schoolSel = inputs[0]; 
+            // הכפתור הוא האח הראשון, האינפוט הוא האח השני
             const schoolInput = schoolSel.parentElement.querySelector('.school-other');
             
             const schoolName = (schoolSel.value === 'other' ? schoolInput.value : schoolSel.value).trim();
             const studentName = inputs[4].value.trim();
-            const result = inputs[8].value; // עמודה 9 היא התוצאה
+            const result = inputs[8].value; 
 
             if(result === 'עבר' && schoolName && studentName) {
                 if(!passBySchool[schoolName]) passBySchool[schoolName] = [];
@@ -708,14 +719,29 @@
             return;
         }
 
-        let msg = `*רשימת עוברים - ${date} - ${area}*\n`;
+        const buttonsDiv = document.getElementById('pass-list-buttons');
+        buttonsDiv.innerHTML = '';
+        
         for (const [school, students] of Object.entries(passBySchool)) {
+            let msg = `*רשימת עוברים - ${date} - ${area}*\n`;
             msg += `\n🚗 *${school}*\n`;
             students.forEach(st => msg += `✅ ${st}\n`);
+            
+            // יצירת כפתור לכל בית ספר
+            const btn = document.createElement('button');
+            btn.className = 'btn-whatsapp';
+            btn.style.marginBottom = '5px';
+            btn.innerText = `שלח רשימה ל-${school} (${students.length})`;
+            btn.onclick = function() {
+                const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+                window.open(url, '_blank');
+            };
+            buttonsDiv.appendChild(btn);
         }
-
-        const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+        
+        document.getElementById('pass-list-section').style.display = 'block';
+        // גלילה למטה לאזור הכפתורים
+        document.getElementById('pass-list-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     function resetForm() { if(confirm('לנקות הכל?')) { localStorage.clear(); location.reload(); } }
