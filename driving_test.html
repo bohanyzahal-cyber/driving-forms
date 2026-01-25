@@ -5,7 +5,7 @@
     <title>טופס מבחן נהיגה - צה"ל - משרד הרישוי</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; padding: 20px; direction: rtl; }
-        .form-container { max-width: 1100px; margin: auto; background: white; padding: 30px; border: 2px solid #000; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .form-container { max-width: 1100px; margin: auto; background: white; padding: 30px; border: 2px solid #000; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
         .header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 10px; padding-bottom: 5px; }
         .header h1 { margin: 0; font-size: 24px; color: #1a3a1a; }
         .header h2 { margin: 2px 0; font-size: 18px; }
@@ -34,17 +34,28 @@
         .bottom-actions { text-align: center; margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         .btn-action { padding: 12px 25px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; color: white; display: flex; align-items: center; gap: 5px; }
         .btn-print { background: #c00; } .btn-back { background: #555; } .btn-whatsapp { background: #25D366; } .btn-later { background: #ff9800; color: #000; }
+        
+        /* כפתור חזרה לדוח */
+        .return-btn {
+            position: fixed; top: 10px; right: 10px; z-index: 999;
+            background: #28a745; color: white; padding: 10px 20px;
+            border-radius: 5px; text-decoration: none; font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
         @media print { 
             @page { size: A4 landscape; margin: 5mm; }
             body { padding: 0; background: white; margin: 0; -webkit-print-color-adjust: exact; } 
             .form-container { border: none; box-shadow: none; width: 100%; max-width: 100%; padding: 0; } 
-            .no-print, .bottom-actions, .score-select, .clear-btn, .reason-select { display: none !important; } 
+            .no-print, .bottom-actions, .score-select, .clear-btn, .reason-select, .return-btn { display: none !important; } 
             .row-item { min-height: 20px; padding: 1px 4px; }
             .notes-area { border: 1px solid #000; overflow: visible; }
         }
     </style>
 </head>
 <body>
+
+<a href="#" onclick="goBack()" class="return-btn no-print">↩ חזור לדוח הבוחן</a>
 
 <div class="form-container">
     <div class="header">
@@ -54,13 +65,13 @@
 
     <div class="top-info">
         <div class="vehicle-types">
-            <label><input type="checkbox"> פרטי/מסחרי (B)</label>
-            <label><input type="checkbox"> משא קל (C1)</label>
-            <label><input type="checkbox"> משא כבד (C)</label>
-            <label><input type="checkbox"> גורר תומך (E)</label>
-            <label><input type="checkbox"> אוטובוס (D)</label>
-            <label><input type="checkbox"> אופנוע (A)</label>
-            <label><input type="checkbox"> מונית</label>
+            <label><input type="checkbox" class="save-state" id="vt_B"> פרטי/מסחרי (B)</label>
+            <label><input type="checkbox" class="save-state" id="vt_C1"> משא קל (C1)</label>
+            <label><input type="checkbox" class="save-state" id="vt_C"> משא כבד (C)</label>
+            <label><input type="checkbox" class="save-state" id="vt_E"> גורר תומך (E)</label>
+            <label><input type="checkbox" class="save-state" id="vt_D"> אוטובוס (D)</label>
+            <label><input type="checkbox" class="save-state" id="vt_A"> אופנוע (A)</label>
+            <label><input type="checkbox" class="save-state" id="vt_Taxi"> מונית</label>
         </div>
         <div class="field" style="justify-content: center;">
             <label>שם בית הספר לנהיגה:</label>
@@ -93,7 +104,7 @@
     </div>
 
     <div class="footer">
-        <textarea id="finalNotes" class="notes-area" placeholder="הערות הבוחן יופיעו כאן אוטומטית..." oninput="autoResize(this)"></textarea>
+        <textarea id="finalNotes" class="notes-area save-state" placeholder="הערות הבוחן יופיעו כאן אוטומטית..." oninput="autoResize(this); saveDraft()"></textarea>
         
         <div class="summary-box">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -164,11 +175,111 @@
     const dataB = Object.keys(reasonsDB).slice(15, 27);
     const dataC = Object.keys(reasonsDB).slice(27);
 
-    // מניעת סגירה בטעות
-    let isSaved = false;
-    window.onbeforeunload = function() {
-        if (!isSaved) return "האם אתה בטוח שברצונך לצאת? הנתונים לא נשמרו.";
+    // מזהה ייחודי לשמירת טיוטה (לפי ת.ז)
+    let draftKey = '';
+
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // מילוי שדות
+        const fields = {
+            'school': 'targetSchool', 'id': 'targetID', 'car': 'targetCar',
+            'date': 'targetDate', 'time': 'targetTime', 'tester': 'targetTester'
+        };
+        for(let key in fields) {
+            if(urlParams.has(key)) document.getElementById(fields[key]).value = urlParams.get(key);
+        }
+
+        if(urlParams.has('name')) {
+            const fullName = urlParams.get('name').trim();
+            const idx = fullName.indexOf(' ');
+            if (idx > 0) {
+                document.getElementById('targetFirstName').value = fullName.substring(0, idx);
+                document.getElementById('targetLastName').value = fullName.substring(idx + 1);
+            } else {
+                document.getElementById('targetFirstName').value = fullName;
+            }
+            updatePageTitle();
+        }
+
+        // הגדרת מפתח טיוטה
+        if(urlParams.has('id')) {
+            draftKey = 'draft_' + urlParams.get('id');
+            restoreDraft(); 
+        }
+        
+        // מעקב אחרי שינויים לשמירה
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            el.addEventListener('change', saveDraft);
+            el.addEventListener('input', saveDraft);
+        });
     };
+
+    // פונקציית חזרה חכמה
+    function goBack() {
+        const dashboard = window.open('', 'main_dashboard');
+        if (dashboard && dashboard.location.href !== 'about:blank') {
+            dashboard.focus();
+        } else {
+            window.open('index.html', 'main_dashboard');
+        }
+    }
+
+    // פונקציית סגירה בטוחה
+    function safeClose() {
+        saveDraft(); // שמירה אחרונה
+        
+        // נסיון למצוא את החלון הראשי ולהתמקד בו
+        const dashboard = window.open('', 'main_dashboard');
+        if (dashboard && dashboard.location.href !== 'about:blank') {
+            dashboard.focus();
+        }
+        
+        // סגירת החלון הנוכחי
+        window.close();
+        
+        // אם הסגירה נחסמה ע"י הדפדפן, ננווט חזרה לדוח
+        if (!window.closed) {
+            window.location.href = 'index.html';
+        }
+    }
+
+    function saveDraft() {
+        if(!draftKey) return;
+        const data = { scores: {}, reasons: {}, notes: document.getElementById('finalNotes').value, vehicleTypes: {} };
+        
+        document.querySelectorAll('.score-select').forEach((sel, i) => { if(sel.value) data.scores[i] = sel.value; });
+        document.querySelectorAll('.save-state[type="checkbox"]').forEach(cb => { data.vehicleTypes[cb.id] = cb.checked; });
+        
+        localStorage.setItem(draftKey, JSON.stringify(data));
+    }
+
+    function restoreDraft() {
+        if(!draftKey) return;
+        const data = JSON.parse(localStorage.getItem(draftKey));
+        if(!data) return;
+
+        if(data.notes) document.getElementById('finalNotes').value = data.notes;
+        
+        // שחזור ציונים
+        const selects = document.querySelectorAll('.score-select');
+        if(data.scores) {
+            Object.keys(data.scores).forEach(idx => {
+                if(selects[idx]) {
+                    selects[idx].value = data.scores[idx];
+                    markIcon(selects[idx]); 
+                }
+            });
+        }
+        
+        // שחזור סוגי רכב
+        if(data.vehicleTypes) {
+            Object.keys(data.vehicleTypes).forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.checked = data.vehicleTypes[id];
+            });
+        }
+    }
 
     function renderColumn(id, list) {
         const container = document.getElementById(id);
@@ -182,11 +293,11 @@
             div.innerHTML = `
                 <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
                     <span class="label-text">${item}</span>
-                    <select class="reason-select" id="reason-${item}" onchange="toggleReason(this, '${item}')">
+                    <select class="reason-select" onchange="toggleReason(this, '${item}')">
                         ${options}<option value="אחר">הקלדה ידנית / אחר</option>
                     </select>
                 </div>
-                <select class="score-select no-print" onchange="markIcon(this)">
+                <select class="score-select no-print" onchange="markIcon(this); saveDraft()">
                     <option value="">בחר</option><option value="v">טוב (✓)</option><option value="x">רע (X)</option><option value="ox">הפקעה (⊗)</option>
                 </select>
                 <div class="visual-box"></div>
@@ -240,6 +351,7 @@
         notesArea.value = currentText;
         selectElem.value = ""; 
         autoResize(notesArea);
+        saveDraft();
     }
 
     function autoResize(textarea) {
@@ -256,11 +368,9 @@
         
         if(!fullName.trim()) { alert('אנא וודא ששם הנבחן מלא'); return; }
 
-        // מבנה ההודעה - ללא ת.ז
         let msg = `*תוצאות מבחן נהיגה - נכשל* ❌\n`;
         msg += `שם הנבחן: ${fullName}\n`;
         if(school) msg += `בי"ס: ${school}\n`;
-        // הוספת אזור אם קיים ב-URL או מקומי, כרגע אין שדה אזור בטופס הזה, נסתמך על בי"ס
         if(tester) msg += `בוחן: ${tester}\n`;
         msg += `----------------\n`;
         msg += `*פירוט הליקויים:*\n${notes}\n`;
@@ -269,10 +379,8 @@
         
         if(textOnly) return msg;
         
-        // תיקון סימני שאלה: שימוש ב-api.whatsapp.com
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
-        isSaved = true; // סימון שנשלח/נשמר
     }
 
     function saveToOutbox() {
@@ -283,24 +391,11 @@
         savedMessages.push({ name: fullName, text: msg, time: new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'}) });
         localStorage.setItem('whatsapp_outbox', JSON.stringify(savedMessages));
         
-        isSaved = true; // מונע הודעת אזהרה ביציאה
-        
-        // שינוי כפתור לחיווי הצלחה
         const btn = document.getElementById('btnSaveLater');
         const originalText = btn.innerText;
-        btn.innerText = "✅ נשמר! הטופס פתוח";
+        btn.innerText = "✅ נשמר!";
         btn.style.background = "#28a745";
-        
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.style.background = "#ff9800";
-        }, 3000);
-    }
-    
-    function safeClose() {
-        if(isSaved || confirm('לא שמרת או שלחת את הטופס. האם לצאת בכל זאת?')) {
-            window.close();
-        }
+        setTimeout(() => { btn.innerText = originalText; btn.style.background = "#ff9800"; }, 3000);
     }
 
     renderColumn('colA', dataA);
@@ -324,28 +419,6 @@
         const last = document.getElementById('targetLastName').value;
         if(first || last) document.title = "כישלון - " + first + " " + last;
     }
-
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.has('school')) document.getElementById('targetSchool').value = urlParams.get('school');
-        if(urlParams.has('id')) document.getElementById('targetID').value = urlParams.get('id');
-        if(urlParams.has('car')) document.getElementById('targetCar').value = urlParams.get('car');
-        if(urlParams.has('date')) document.getElementById('targetDate').value = urlParams.get('date');
-        if(urlParams.has('time')) document.getElementById('targetTime').value = urlParams.get('time');
-        if(urlParams.has('tester')) document.getElementById('targetTester').value = urlParams.get('tester');
-
-        if(urlParams.has('name')) {
-            const fullName = urlParams.get('name').trim();
-            const firstSpaceIndex = fullName.indexOf(' ');
-            if (firstSpaceIndex > 0) {
-                document.getElementById('targetFirstName').value = fullName.substring(0, firstSpaceIndex);
-                document.getElementById('targetLastName').value = fullName.substring(firstSpaceIndex + 1);
-            } else {
-                document.getElementById('targetFirstName').value = fullName;
-            }
-            updatePageTitle();
-        }
-    };
 </script>
 
 </body>
