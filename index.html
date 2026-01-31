@@ -34,7 +34,8 @@
         /* שדות קלט */
         input.tbl-input, select.tbl-input { width: 100%; border: none; background: transparent; text-align: center; font-size: 12px; outline: none; font-family: inherit; padding: 0; margin: 0; height: 100%; display: block; }
         select.tbl-input { -webkit-appearance: none; appearance: none; cursor: pointer; }
-        input[type="time"] { -webkit-appearance: none; background: transparent; }
+        input[type="time"] { -webkit-appearance: none; background: transparent; cursor: pointer; }
+        input[type="time"]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; }
         
         /* שדה "אחר" לבי"ס */
         .school-wrapper { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -52,8 +53,18 @@
         .tester-details { font-weight: bold; font-size: 12px; line-height: 1.3; white-space: pre-line; min-height: 40px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;}
         canvas { border: 1px dashed #999; cursor: crosshair; background: #fff; display: block; margin: 0 auto; }
 
-        /* כפתורים צפים */
-        .floating-controls { position: fixed; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+        /* כפתורים ראשיים בתוך הדף */
+        .main-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            direction: rtl;
+        }
+        .main-buttons button {
+            padding: 8px 15px;
+            font-size: 13px;
+        }
         .table-actions { display: flex; gap: 10px; margin-bottom: 5px; direction: rtl; }
         button { border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 12px; }
         .btn-print { background-color: #007bff; }
@@ -61,7 +72,7 @@
         .btn-add { background-color: #28a745; }
         .btn-remove { background-color: #6c757d; }
         .clear-sig-btn { background-color: #6c757d; margin-top: 5px; font-size: 10px; padding: 2px 6px; width: auto; display: inline-block; }
-        .btn-pass-list { background-color: #17a2b8; width: 100%; margin-top: 10px; }
+        .btn-pass-list { background-color: #17a2b8; }
 
         /* אזורי עזר (Outbox) */
         #outbox-section, #pass-list-section { margin-top: 20px; border-top: 2px dashed #999; padding-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 5px; }
@@ -72,7 +83,7 @@
 
         @media print { 
             body { background: white; padding: 0; margin: 0; }
-            .floating-controls, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, #pass-list-section, .btn-pass-list, .btn-open-form { display: none !important; }
+            .main-buttons, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, #pass-list-section, .btn-pass-list, .btn-open-form { display: none !important; }
             .a4-page { box-shadow: none; margin: 0; width: 210mm; height: 297mm; padding: 10mm; overflow: hidden; }
             .table-responsive { overflow: visible; display: block; }
             table { min-width: 100%; width: 100%; }
@@ -83,28 +94,27 @@
         }
         
         @media screen and (max-width: 768px) {
-            body { flex-direction: column; align-items: center; padding-top: 0; }
-            .floating-controls { position: relative; top: auto; left: auto; width: 100%; flex-direction: row; justify-content: space-between; background-color: #333; padding: 10px; margin-bottom: 15px; border-radius: 0; }
-            .floating-controls button { flex: 1; margin: 0 2px; padding: 10px 5px; height: auto; white-space: normal; }
+            body { flex-direction: column; align-items: center; padding: 0; }
+            .main-buttons { flex-wrap: wrap; gap: 5px; }
+            .main-buttons button { padding: 8px 12px; font-size: 12px; }
             .a4-page { width: 100%; margin: 0; border-radius: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="floating-controls">
-    <button class="btn-print" onclick="saveWithSmartName()">🖨️ שמור PDF</button>
-    <button class="btn-reset" onclick="resetForm()">🔄 נקה הכל</button>
-    <button class="btn-pass-list" onclick="generatePassList()">🏆 צור רשימות</button>
-</div>
-
 <div class="a4-page">
+    <div class="main-buttons">
+        <button class="btn-print" onclick="saveWithSmartName()">🖨️ שמור PDF</button>
+        <button class="btn-reset" onclick="resetForm()">🔄 נקה הכל</button>
+        <button class="btn-pass-list" onclick="generatePassList()">🏆 צור רשימות</button>
+    </div>
     <div class="settings-panel">
         <div class="settings-title">הגדרות פקודת עבודה</div>
         <div><label>יום:</label><select id="daySelect" onchange="saveHeader()"><option>א</option><option>ב</option><option>ג</option><option>ד</option><option>ה</option></select></div>
         <div><label>תאריך:</label><input type="text" id="dateInput" placeholder="dd/mm/yy" oninput="saveHeader()"></div>
         <div><label>אזור:</label><select id="areaSelect" onchange="handleAreaChange()"><option value="">בחר אזור...</option></select></div>
-        <div><label>בוחנים:</label><input type="text" id="testersInput" placeholder="הקלד שמות..." oninput="saveHeader()"></div>
+        <div><label>בוחנים:</label><input type="text" id="testersInput" placeholder="הקלד שמות..." oninput="saveHeader(); updateTesterSelects()"></div>
     </div>
 
     <div class="header-section">
@@ -120,35 +130,77 @@
     <div class="table-responsive">
         <table id="planTable">
             <colgroup>
-                <col style="width: 5%;"> <col style="width: 5%;"> <col style="width: 5%;"> <col style="width: 5%;">
-                <col style="width: 5%;"> <col style="width: 5%;"> <col style="width: 5%;"> <col style="width: 5%;">
-                <col style="width: 9%;"> <col style="width: 16%;">
-                <col style="width: 7%;"> <col style="width: 7%;"> <col style="width: 7%;"> <col style="width: 19%;">
+                <col style="width: 4%;"><col style="width: 4%;"><col style="width: 4%;"><col style="width: 4%;"> <!-- נכשל: צבא שונות ואוצ'ר קד"צ -->
+                <col style="width: 4%;"><col style="width: 4%;"><col style="width: 4%;"><col style="width: 4%;"> <!-- עבר: צבא שונות ואוצ'ר קד"צ -->
+                <col style="width: 6%;"> <!-- שעה -->
+                <col style="width: 12%;"> <!-- הערות -->
+                <col style="width: 5%;"> <!-- כמות מאושרת -->
+                <col style="width: 5%;"> <!-- כמות מבוקשת -->
+                <col style="width: 8%;"> <!-- מס' רכב -->
+                <col style="width: 5%;"> <!-- סוג רכב -->
+                <col style="width: 19%;"> <!-- בי"ס -->
             </colgroup>
             <thead>
                 <tr>
-                    <th colspan="8">ביצוע</th><th rowspan="2">שעה</th><th rowspan="2">הערות</th><th colspan="4">תכנון</th>
+                    <th colspan="8">ביצוע</th>
+                    <th rowspan="2">שעה</th>
+                    <th rowspan="2">הערות</th>
+                    <th colspan="5">תכנון</th>
                 </tr>
                 <tr>
-                    <th colspan="4">נכשל</th><th colspan="4">עבר</th><th>כמות</th><th>בקשה</th><th>רכב</th><th>ביה"ס</th>
+                    <th colspan="4">נכשל</th>
+                    <th colspan="4">עבר</th>
+                    <th>כמות מאושרת</th>
+                    <th>כמות מבוקשת</th>
+                    <th>מס' רכב</th>
+                    <th>סוג רכב</th>
+                    <th>ביה"ס</th>
                 </tr>
                 <tr style="font-size: 10px;">
-                    <th>שונות</th><th>צבא</th><th>ואוצ'ר</th><th>קד"צ</th>
-                    <th>שונות</th><th>צבא</th><th>ואוצ'ר</th><th>קד"צ</th>
-                    <th></th><th></th><th></th><th></th><th></th><th></th>
+                    <th>צבא</th><th>שונות</th><th>ואוצ'ר</th><th>קד"צ</th>
+                    <th>צבא</th><th>שונות</th><th>ואוצ'ר</th><th>קד"צ</th>
+                    <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
                 </tr>
             </thead>
             <tbody id="planningTableBody"></tbody>
             <tfoot>
                 <tr>
-                    <td><input class="tbl-input sum-fail" readonly></td><td><input class="tbl-input sum-fail" readonly></td>
-                    <td><input class="tbl-input sum-fail" readonly></td><td><input class="tbl-input sum-fail" readonly></td>
-                    <td><input class="tbl-input sum-pass" readonly></td><td><input class="tbl-input sum-pass" readonly></td>
-                    <td><input class="tbl-input sum-pass" readonly></td><td><input class="tbl-input sum-pass" readonly></td>
-                    <td colspan="2" style="text-align: left; padding-left: 5px;">סה"כ ביצוע:</td>
-                    <td colspan="4"><input id="grandTotalDisplay" class="tbl-input grand-total" readonly></td>
+                    <td><input class="tbl-input" id="sumFailArmy" readonly></td>
+                    <td><input class="tbl-input" id="sumFailOther" readonly></td>
+                    <td><input class="tbl-input" id="sumFailVoucher" readonly></td>
+                    <td><input class="tbl-input" id="sumFailKadatz" readonly></td>
+                    <td><input class="tbl-input" id="sumPassArmy" readonly></td>
+                    <td><input class="tbl-input" id="sumPassOther" readonly></td>
+                    <td><input class="tbl-input" id="sumPassVoucher" readonly></td>
+                    <td><input class="tbl-input" id="sumPassKadatz" readonly></td>
+                    <td colspan="7" style="text-align: right; padding-right: 10px; font-weight: bold;">
+                        סה"כ ביצוע: עברו <span id="totalPass" style="color: green;">0</span> | נכשלו <span id="totalFail" style="color: red;">0</span> | סה"כ <span id="totalAll" style="color: blue;">0</span>
+                    </td>
                 </tr>
             </tfoot>
+        </table>
+    </div>
+
+    <div style="text-align: right; font-weight: bold; margin: 15px 0 5px 0; border-bottom: 1px solid #000; font-size: 13px;">בוחנים:</div>
+    <div class="table-actions">
+        <button class="btn-add" onclick="addTesterRow()">+ הוסף בוחן</button>
+        <button class="btn-remove" onclick="removeTesterRow()">- מחק בוחן</button>
+    </div>
+    <div class="table-responsive">
+        <table id="testersTable">
+            <colgroup>
+                <col style="width: 50%;">
+                <col style="width: 25%;">
+                <col style="width: 25%;">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>שם בוחן</th>
+                    <th>עירוני</th>
+                    <th>אופנוע/טרקטור</th>
+                </tr>
+            </thead>
+            <tbody id="testersTableBody"></tbody>
         </table>
     </div>
 
@@ -269,8 +321,14 @@
     function initTables() {
         const savedPlanCount = parseInt(localStorage.getItem('plan_rows_count')) || 4;
         const planBody = document.getElementById('planningTableBody');
-        planBody.innerHTML = ''; 
-        for(let i=0; i<savedPlanCount; i++) addPlanRow(false); 
+        planBody.innerHTML = '';
+        for(let i=0; i<savedPlanCount; i++) addPlanRow(false);
+
+        // טבלת בוחנים
+        const savedTesterCount = parseInt(localStorage.getItem('tester_rows_count')) || 1;
+        const testerBody = document.getElementById('testersTableBody');
+        testerBody.innerHTML = '';
+        for(let i=0; i<savedTesterCount; i++) addTesterRow(false);
 
         const examBody = document.getElementById('examTableBody');
         examBody.innerHTML = '';
@@ -285,7 +343,7 @@
                 <td>${createSchoolCell()}</td>
                 <td><input class="tbl-input exam-input"></td>
                 <td><input class="tbl-input exam-input"></td>
-                <td><input class="tbl-input exam-input" style="text-align:right;"></td>
+                <td><input class="tbl-input exam-input"></td>
                 <td><select class="tbl-input exam-input">${typeOptions}</select></td>
                 <td><select class="tbl-input exam-input">${popOptions}</select></td>
                 <td><select class="tbl-input exam-input">${testNumOptions}</select></td>
@@ -307,6 +365,7 @@
     function bindEvents() {
         document.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
         document.querySelectorAll('.exam-input').forEach(el => el.addEventListener('input', saveExamData));
+        document.querySelectorAll('.tester-input').forEach(el => el.addEventListener('input', saveTesterData));
         document.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); saveAllData(); }));
         document.querySelectorAll('.school-other').forEach(el => el.addEventListener('input', saveAllData));
     }
@@ -355,6 +414,10 @@
                 }
             });
         }
+
+        // טען נתוני בוחנים
+        loadTesterData();
+
         calcTotals();
     }
 
@@ -426,49 +489,144 @@
         const tbody = document.getElementById('planningTableBody');
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><input class="tbl-input count-fail plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-fail plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-fail plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-fail plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-pass plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-pass plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-pass plan-input" type="number" oninput="calcTotals()"></td>
-            <td><input class="tbl-input count-pass plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input fail-army plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input fail-other plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input fail-voucher plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input fail-kadatz plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input pass-army plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input pass-other plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input pass-voucher plan-input" type="number" oninput="calcTotals()"></td>
+            <td><input class="tbl-input pass-kadatz plan-input" type="number" oninput="calcTotals()"></td>
             <td><input type="time" class="tbl-input plan-input"></td>
-            <td><input class="tbl-input plan-input"></td>
-            <td><input type="number" class="tbl-input plan-input"></td>
-            <td><input type="number" class="tbl-input plan-input"></td>
+            <td><input class="tbl-input plan-input" placeholder="הערות"></td>
+            <td><input type="number" class="tbl-input count-approved plan-input"></td>
+            <td><input type="number" class="tbl-input count-requested plan-input"></td>
+            <td><input class="tbl-input plan-input" placeholder="מס' רכב"></td>
             <td>${createTypeSelect().replace('exam-input', 'plan-input')}</td>
             <td>${createSchoolCell(true)}</td>
         `;
         tbody.appendChild(row);
         refreshAllSchoolSelects();
         bindEvents();
-        planRowCount = tbody.children.length; 
+        planRowCount = tbody.children.length;
         if(save) { localStorage.setItem('plan_rows_count', planRowCount); savePlanData(); }
     }
 
     function removePlanRow() {
         const tbody = document.getElementById('planningTableBody');
-        if (tbody.children.length > 1) { 
-            tbody.removeChild(tbody.lastChild); 
-            planRowCount = tbody.children.length; 
+        if (tbody.children.length > 1) {
+            tbody.removeChild(tbody.lastChild);
+            planRowCount = tbody.children.length;
             localStorage.setItem('plan_rows_count', planRowCount);
-            savePlanData(); calcTotals(); 
+            savePlanData(); calcTotals();
+        }
+    }
+
+    // ============ TESTERS TABLE ============
+    let testerRowCount = 0;
+
+    function addTesterRow(save = true) {
+        const tbody = document.getElementById('testersTableBody');
+        const row = document.createElement('tr');
+        // יצירת רשימת בוחנים מההגדרות
+        const testersFromInput = document.getElementById('testersInput').value;
+        let testerOptions = '<option value="">בחר בוחן...</option>';
+        if(testersFromInput) {
+            testersFromInput.split(',').forEach(t => {
+                const name = t.trim();
+                if(name) testerOptions += `<option value="${name}">${name}</option>`;
+            });
+        }
+        row.innerHTML = `
+            <td><select class="tbl-input tester-input tester-select">${testerOptions}</select></td>
+            <td><input class="tbl-input tester-input" type="number" min="0" max="20"></td>
+            <td><input class="tbl-input tester-input" type="number" min="0" max="20"></td>
+        `;
+        tbody.appendChild(row);
+        testerRowCount = tbody.children.length;
+        if(save) { localStorage.setItem('tester_rows_count', testerRowCount); saveTesterData(); }
+    }
+
+    // עדכון רשימות הבוחנים כשמשתנה שדה הבוחנים
+    function updateTesterSelects() {
+        const testersFromInput = document.getElementById('testersInput').value;
+        let testerOptions = '<option value="">בחר בוחן...</option>';
+        if(testersFromInput) {
+            testersFromInput.split(',').forEach(t => {
+                const name = t.trim();
+                if(name) testerOptions += `<option value="${name}">${name}</option>`;
+            });
+        }
+        document.querySelectorAll('.tester-select').forEach(sel => {
+            const currentVal = sel.value;
+            sel.innerHTML = testerOptions;
+            if(currentVal) sel.value = currentVal;
+        });
+    }
+
+    function removeTesterRow() {
+        const tbody = document.getElementById('testersTableBody');
+        if (tbody.children.length > 1) {
+            tbody.removeChild(tbody.lastChild);
+            testerRowCount = tbody.children.length;
+            localStorage.setItem('tester_rows_count', testerRowCount);
+            saveTesterData();
+        }
+    }
+
+    function saveTesterData() {
+        const inputs = document.querySelectorAll('#testersTableBody input');
+        const vals = Array.from(inputs).map(el => el.value);
+        localStorage.setItem('data_testers_table', JSON.stringify(vals));
+    }
+
+    function loadTesterData() {
+        const data = JSON.parse(localStorage.getItem('data_testers_table'));
+        if (data) {
+            const inputs = document.querySelectorAll('#testersTableBody input');
+            inputs.forEach((el, i) => {
+                if (i < data.length) el.value = data[i];
+            });
         }
     }
 
     function calcTotals() {
-        const sums = [0,0,0,0, 0,0,0,0];
-        let grandTotal = 0;
+        // סיכומי ביצוע בלבד - עבר
+        let sumPassArmy = 0, sumPassOther = 0, sumPassVoucher = 0, sumPassKadatz = 0;
+        // סיכומי ביצוע בלבד - נכשל
+        let sumFailArmy = 0, sumFailOther = 0, sumFailVoucher = 0, sumFailKadatz = 0;
+
         document.querySelectorAll('#planningTableBody tr').forEach(row => {
-            row.querySelectorAll('input[type="number"].count-fail, input[type="number"].count-pass').forEach((inp, idx) => {
-                const val = parseInt(inp.value) || 0;
-                if(idx < 8) { sums[idx] += val; grandTotal += val; }
-            });
+            // עבר (ביצוע)
+            sumPassArmy += parseInt(row.querySelector('.pass-army')?.value) || 0;
+            sumPassOther += parseInt(row.querySelector('.pass-other')?.value) || 0;
+            sumPassVoucher += parseInt(row.querySelector('.pass-voucher')?.value) || 0;
+            sumPassKadatz += parseInt(row.querySelector('.pass-kadatz')?.value) || 0;
+            // נכשל (ביצוע)
+            sumFailArmy += parseInt(row.querySelector('.fail-army')?.value) || 0;
+            sumFailOther += parseInt(row.querySelector('.fail-other')?.value) || 0;
+            sumFailVoucher += parseInt(row.querySelector('.fail-voucher')?.value) || 0;
+            sumFailKadatz += parseInt(row.querySelector('.fail-kadatz')?.value) || 0;
         });
-        document.querySelectorAll('tfoot input.sum-fail, tfoot input.sum-pass').forEach((inp, idx) => { inp.value = sums[idx] > 0 ? sums[idx] : ''; });
-        document.getElementById('grandTotalDisplay').value = grandTotal > 0 ? grandTotal : '';
+
+        // עדכן סיכומי עבר (ביצוע בלבד)
+        document.getElementById('sumPassArmy').value = sumPassArmy > 0 ? sumPassArmy : '';
+        document.getElementById('sumPassOther').value = sumPassOther > 0 ? sumPassOther : '';
+        document.getElementById('sumPassVoucher').value = sumPassVoucher > 0 ? sumPassVoucher : '';
+        document.getElementById('sumPassKadatz').value = sumPassKadatz > 0 ? sumPassKadatz : '';
+        // עדכן סיכומי נכשל (ביצוע בלבד)
+        document.getElementById('sumFailArmy').value = sumFailArmy > 0 ? sumFailArmy : '';
+        document.getElementById('sumFailOther').value = sumFailOther > 0 ? sumFailOther : '';
+        document.getElementById('sumFailVoucher').value = sumFailVoucher > 0 ? sumFailVoucher : '';
+        document.getElementById('sumFailKadatz').value = sumFailKadatz > 0 ? sumFailKadatz : '';
+
+        // סיכום כולל ביצוע
+        const totalPass = sumPassArmy + sumPassOther + sumPassVoucher + sumPassKadatz;
+        const totalFail = sumFailArmy + sumFailOther + sumFailVoucher + sumFailKadatz;
+        const totalAll = totalPass + totalFail;
+        document.getElementById('totalPass').textContent = totalPass;
+        document.getElementById('totalFail').textContent = totalFail;
+        document.getElementById('totalAll').textContent = totalAll;
     }
 
     function getRowData(selectElem) {
