@@ -73,6 +73,27 @@
         .btn-remove { background-color: #6c757d; }
         .clear-sig-btn { background-color: #6c757d; margin-top: 5px; font-size: 10px; padding: 2px 6px; width: auto; display: inline-block; }
         .btn-pass-list { background-color: #17a2b8; }
+        .btn-distribute { background-color: #9c27b0; }
+
+        /* Modal חלוקת עבודה */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; border-radius: 10px; padding: 20px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; direction: rtl; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9c27b0; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; color: #9c27b0; font-size: 18px; }
+        .modal-close { background: #dc3545; color: white; border: none; font-size: 20px; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; }
+        .distribute-section { margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+        .distribute-section h3 { margin: 0 0 10px 0; font-size: 14px; color: #333; }
+        .distribute-checkbox { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+        .distribute-checkbox input[type="checkbox"] { width: 18px; height: 18px; }
+        .distribute-result { background: #e8f5e9; border: 2px solid #4caf50; border-radius: 5px; padding: 15px; margin-top: 15px; }
+        .distribute-result h3 { color: #2e7d32; margin: 0 0 10px 0; }
+        .tester-assignment { background: white; border: 1px solid #ddd; border-radius: 5px; padding: 10px; margin-bottom: 10px; }
+        .tester-assignment h4 { margin: 0 0 8px 0; color: #9c27b0; display: flex; justify-content: space-between; }
+        .tester-assignment .total { background: #9c27b0; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .tester-assignment ul { margin: 0; padding-right: 20px; }
+        .tester-assignment li { margin: 3px 0; }
+        .btn-send-assignment { background: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-top: 5px; }
 
         /* אזורי עזר (Outbox) */
         #outbox-section, #pass-list-section { margin-top: 20px; border-top: 2px dashed #999; padding-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 5px; }
@@ -108,6 +129,7 @@
         <button class="btn-print" onclick="saveWithSmartName()">🖨️ שמור PDF</button>
         <button class="btn-reset" onclick="resetForm()">🔄 נקה הכל</button>
         <button class="btn-pass-list" onclick="generatePassList()">🏆 צור רשימות</button>
+        <button class="btn-distribute" onclick="openDistributeModal()">📊 חלק עבודה</button>
     </div>
     <div class="settings-panel">
         <div class="settings-title">הגדרות פקודת עבודה</div>
@@ -252,12 +274,56 @@
     </div>
 </div>
 
+<!-- Modal חלוקת עבודה -->
+<div class="modal-overlay" id="distributeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📊 חלוקת עבודה בין בוחנים</h2>
+            <button class="modal-close" onclick="closeDistributeModal()">×</button>
+        </div>
+
+        <div class="distribute-section">
+            <h3>👥 בוחנים משתתפים:</h3>
+            <div id="testersList"></div>
+        </div>
+
+        <div class="distribute-section">
+            <h3>⚙️ הגדרות:</h3>
+            <div class="distribute-checkbox">
+                <input type="checkbox" id="leadTesterLess" checked>
+                <label for="leadTesterLess">בוחן אחראי (ראשון ברשימה) מקבל נבחן אחד פחות</label>
+            </div>
+            <div class="distribute-checkbox">
+                <input type="checkbox" id="keepSchoolTogether" checked>
+                <label for="keepSchoolTogether">שמור בית ספר אצל אותו בוחן (אם אפשר)</label>
+            </div>
+        </div>
+
+        <div class="distribute-section">
+            <h3>🏫 בתי ספר וכמויות (מטבלת התכנון):</h3>
+            <div id="schoolsList"></div>
+            <p style="font-size:12px; color:#666; margin-top:10px;">סה"כ נבחנים: <strong id="totalExaminees">0</strong></p>
+        </div>
+
+        <div style="text-align: center;">
+            <button onclick="calculateDistribution()" style="background:#9c27b0; color:white; padding:12px 30px; font-size:16px; border:none; border-radius:5px; cursor:pointer;">
+                🔄 חשב חלוקה
+            </button>
+        </div>
+
+        <div class="distribute-result" id="distributeResult" style="display:none;">
+            <h3>✅ תוצאת החלוקה:</h3>
+            <div id="distributionOutput"></div>
+        </div>
+    </div>
+</div>
+
 <script>
     // הגדרת שם חלון ראשי קבוע - חובה לתקשורת תקינה
     window.name = "main_dashboard";
 
     const schoolMap = {
-        "באר שבע": ["שרייבר", "יובלי", "על גלגלים", "יחד", "איציק", "ב.ה 6930", "ליין בהד 6"],
+        "באר שבע": ["שרייבר", "יובלי", "על גלגלים", "יחד", "איציק", "ב.ה 6930", "ליין בהד 6", "איחוד"],
         "אופקים": ["ב.ה 6930", "אופקים", "שי אופקים"],
         "נתיבות": ["שי אופקים", "נתיבות"],
         "דימונה": ["על גלגלים", "דימונה", "עיון"],
@@ -766,6 +832,444 @@
         document.title = `סידור_עבודה_${safeArea}_${safeDate}`;
         window.print();
     }
+
+    // ============ חלוקת עבודה ============
+    const MAX_PER_TESTER = 10; // מקסימום 10 נבחנים לבוחן - קבוע גלובלי
+    let currentAssignments = []; // לשמירת החלוקה הנוכחית לעריכה ידנית
+
+    function openDistributeModal() {
+        // טען בוחנים מההגדרות
+        const testersInput = document.getElementById('testersInput').value;
+        const testers = testersInput.split(',').map(t => t.trim()).filter(t => t);
+
+        if(testers.length < 2) {
+            alert('יש להזין לפחות 2 בוחנים בהגדרות פקודת עבודה');
+            return;
+        }
+
+        // הצג רשימת בוחנים עם checkboxes
+        const testersList = document.getElementById('testersList');
+        testersList.innerHTML = testers.map((t, i) => `
+            <div class="distribute-checkbox">
+                <input type="checkbox" id="tester_${i}" value="${t}" checked>
+                <label for="tester_${i}">${t} ${i === 0 ? '(אחראי)' : ''}</label>
+            </div>
+        `).join('');
+
+        // טען בתי ספר וכמויות מטבלת התכנון
+        loadSchoolsFromPlan();
+
+        // אפס תוצאות קודמות
+        document.getElementById('distributeResult').style.display = 'none';
+
+        document.getElementById('distributeModal').classList.add('active');
+    }
+
+    function closeDistributeModal() {
+        document.getElementById('distributeModal').classList.remove('active');
+    }
+
+    function loadSchoolsFromPlan() {
+        const schoolsList = document.getElementById('schoolsList');
+        const rows = document.querySelectorAll('#planningTableBody tr');
+        let schools = [];
+        let total = 0;
+
+        rows.forEach((row, idx) => {
+            const schoolSelect = row.querySelector('.school-select');
+            const schoolOther = row.querySelector('.school-other');
+            const approvedInput = row.querySelector('.count-approved');
+            const vehicleSelect = row.querySelector('select[class*="plan-input"]:not(.school-select)');
+
+            let schoolName = '';
+            if(schoolSelect) {
+                schoolName = schoolSelect.value === 'other' ? (schoolOther?.value || '') : schoolSelect.value;
+            }
+
+            const approved = parseInt(approvedInput?.value) || 0;
+            const vehicleType = vehicleSelect?.value || '';
+
+            if(schoolName && approved > 0) {
+                schools.push({ name: schoolName, count: approved, type: vehicleType, idx: idx });
+                total += approved;
+            }
+        });
+
+        if(schools.length === 0) {
+            schoolsList.innerHTML = '<p style="color:#d32f2f;">אין בתי ספר עם כמויות בטבלת התכנון</p>';
+            document.getElementById('totalExaminees').textContent = '0';
+            return;
+        }
+
+        schoolsList.innerHTML = schools.map((s, i) => `
+            <div style="display:flex; justify-content:space-between; padding:5px; background:white; margin:3px 0; border-radius:3px; ${s.count > MAX_PER_TESTER ? 'border: 2px solid orange;' : ''}">
+                <span>${s.name} ${s.type ? `(${s.type})` : ''} ${s.count > MAX_PER_TESTER ? '⚠️' : ''}</span>
+                <span style="font-weight:bold;">${s.count} נבחנים</span>
+            </div>
+        `).join('');
+
+        if(schools.some(s => s.count > MAX_PER_TESTER)) {
+            schoolsList.innerHTML += `<p style="color:orange; font-size:12px; margin-top:5px;">⚠️ יש בתי ספר עם יותר מ-10 נבחנים - יפוצלו בין בוחנים</p>`;
+        }
+
+        document.getElementById('totalExaminees').textContent = total;
+
+        // שמור את הנתונים לשימוש בחישוב
+        window.schoolsData = schools;
+    }
+
+    function calculateDistribution() {
+        // קבל בוחנים שנבחרו
+        const selectedTesters = [];
+        document.querySelectorAll('#testersList input[type="checkbox"]:checked').forEach(cb => {
+            selectedTesters.push(cb.value);
+        });
+
+        if(selectedTesters.length < 2) {
+            alert('יש לבחור לפחות 2 בוחנים');
+            return;
+        }
+
+        const schools = window.schoolsData || [];
+        if(schools.length === 0) {
+            alert('אין בתי ספר לחלוקה');
+            return;
+        }
+
+        const leadTesterLess = document.getElementById('leadTesterLess').checked;
+
+        // חישוב סה"כ נבחנים
+        const totalExaminees = schools.reduce((sum, s) => sum + s.count, 0);
+        const numTesters = selectedTesters.length;
+        // הקיבולת המקסימלית היא תמיד numTesters × 10
+        // (האחראי מקבל פחות רק אם יש מקום, אחרת כולם מקבלים שווה)
+        const maxCapacity = numTesters * MAX_PER_TESTER;
+
+        // בדיקה אם יש מספיק בוחנים
+        if(totalExaminees > maxCapacity) {
+            alert(`⚠️ יש ${totalExaminees} נבחנים אבל ${numTesters} בוחנים יכולים לבחון מקסימום ${maxCapacity} (10 לכל בוחן).\nיש להוסיף עוד בוחנים או להפחית נבחנים.`);
+            return;
+        }
+
+        // חישוב יעד אידיאלי לכל בוחן
+        // בוחן אחראי מקבל פחות 1 רק אם אפשר (האחרים לא עוברים את המקסימום)
+        const numRegularTesters = numTesters - 1;
+
+        // חלוקה בסיסית שווה
+        const basePerTester = Math.floor(totalExaminees / numTesters);
+        const remainder = totalExaminees % numTesters;
+
+        let leadTarget;
+
+        if(leadTesterLess && numTesters > 1) {
+            // בדוק אם האחראי יכול לקבל פחות 1
+            // אם האחראי מקבל (basePerTester - 1), נשאר לאחרים (totalExaminees - basePerTester + 1)
+            const potentialLeadTarget = Math.max(0, basePerTester - 1);
+            const remainingIfLeadGetsLess = totalExaminees - potentialLeadTarget;
+            const maxNeededPerRegular = Math.ceil(remainingIfLeadGetsLess / numRegularTesters);
+
+            // אם האחרים לא יעברו את המקסימום, האחראי יכול לקבל פחות
+            if(maxNeededPerRegular <= MAX_PER_TESTER) {
+                leadTarget = potentialLeadTarget;
+            } else {
+                // אין מקום - כולם מקבלים שווה
+                leadTarget = basePerTester;
+            }
+        } else {
+            leadTarget = basePerTester;
+        }
+
+        // חשב כמה נשאר לאחרים
+        const remainingForOthers = totalExaminees - leadTarget;
+        const regularBase = Math.floor(remainingForOthers / numRegularTesters);
+        const regularExtra = remainingForOthers % numRegularTesters;
+
+        // יצירת מבנה הקצאה
+        let extraCounter = regularExtra;
+        const assignments = selectedTesters.map((name, idx) => {
+            let target;
+            if(idx === 0) {
+                target = leadTarget;
+            } else {
+                // בוחנים רגילים מקבלים regularBase, וחלקם מקבלים +1 לחלק את השארית
+                if(extraCounter > 0) {
+                    target = regularBase + 1;
+                    extraCounter--;
+                } else {
+                    target = regularBase;
+                }
+            }
+            return {
+                name: name,
+                isLead: idx === 0,
+                items: [], // פריטים (בי"ס או חלק מבי"ס)
+                total: 0,
+                target: target
+            };
+        });
+
+        // פצל בתי ספר גדולים ליחידות של מקסימום 10
+        let workItems = [];
+        schools.forEach(school => {
+            if(school.count <= MAX_PER_TESTER) {
+                workItems.push({ ...school, original: school.name });
+            } else {
+                // פצל בית ספר גדול
+                let remaining = school.count;
+                let partNum = 1;
+                while(remaining > 0) {
+                    const chunk = Math.min(remaining, MAX_PER_TESTER);
+                    workItems.push({
+                        name: school.name,
+                        count: chunk,
+                        type: school.type,
+                        original: school.name,
+                        part: partNum,
+                        totalParts: Math.ceil(school.count / MAX_PER_TESTER)
+                    });
+                    remaining -= chunk;
+                    partNum++;
+                }
+            }
+        });
+
+        // מיין מהגדול לקטן
+        workItems.sort((a, b) => b.count - a.count);
+
+        // אלגוריתם חלוקה משופר - מחלק נבחן אחרי נבחן
+        // כל workItem יכול להתפצל בין כמה בוחנים
+        workItems.forEach(item => {
+            let remaining = item.count;
+
+            while(remaining > 0) {
+                // מצא את הבוחן הכי מתאים (עם הכי הרבה מקום עד המקסימום)
+                let bestIdx = -1;
+                let bestRoom = 0;
+
+                assignments.forEach((a, idx) => {
+                    const room = MAX_PER_TESTER - a.total;
+                    if(room > bestRoom) {
+                        bestRoom = room;
+                        bestIdx = idx;
+                    }
+                });
+
+                if(bestIdx === -1 || bestRoom === 0) {
+                    console.error(`אין מקום לשאר הנבחנים מ-${item.name}`);
+                    break;
+                }
+
+                // כמה נבחנים להקצות לבוחן הזה
+                const toAssign = Math.min(remaining, bestRoom);
+
+                // בדוק אם כבר יש פריט מאותו בית ספר אצל הבוחן הזה
+                const existingItem = assignments[bestIdx].items.find(i =>
+                    i.name === item.name && i.type === item.type
+                );
+
+                if(existingItem) {
+                    existingItem.count += toAssign;
+                } else {
+                    assignments[bestIdx].items.push({
+                        name: item.name,
+                        count: toAssign,
+                        type: item.type,
+                        original: item.original || item.name
+                    });
+                }
+
+                assignments[bestIdx].total += toAssign;
+                remaining -= toAssign;
+            }
+        });
+
+        // בדיקת שלמות - ודא שכל הנבחנים הוקצו
+        const totalAssigned = assignments.reduce((sum, a) => sum + a.total, 0);
+        if(totalAssigned !== totalExaminees) {
+            console.error(`שגיאה: הוקצו ${totalAssigned} מתוך ${totalExaminees} נבחנים!`);
+        }
+
+        // שמור לעריכה ידנית
+        currentAssignments = assignments;
+
+        // הצג תוצאות
+        displayDistribution(assignments);
+    }
+
+    function displayDistribution(assignments) {
+        const output = document.getElementById('distributionOutput');
+        const date = document.getElementById('dateInput').value || '';
+        const areaSelect = document.getElementById('areaSelect');
+        const area = areaSelect.options[areaSelect.selectedIndex]?.text || '';
+
+        let html = '';
+
+        // בדיקה אם יש חריגה מהמקסימום
+        const hasOverflow = assignments.some(a => a.total > MAX_PER_TESTER);
+        if(hasOverflow) {
+            html += `<div style="background:#ffebee; border:2px solid #f44336; padding:10px; border-radius:5px; margin-bottom:15px;">
+                <strong style="color:#c62828;">⚠️ שגיאה: יש בוחנים עם יותר מ-10 נבחנים!</strong><br>
+                <span style="font-size:12px;">יש להעביר פריטים ידנית או להוסיף בוחנים.</span>
+            </div>`;
+        }
+
+        assignments.forEach((a, testerIdx) => {
+            const isOverLimit = a.total > MAX_PER_TESTER;
+            const itemsList = a.items.map((item, itemIdx) => {
+                const partInfo = item.part ? ` (חלק ${item.part}/${item.totalParts})` : '';
+                // כפתורי +/- להעברת נבחן בודד
+                return `<li style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #eee;">
+                    <span>${item.name}${partInfo}: <strong>${item.count}</strong> ${item.type ? `(${item.type})` : ''}</span>
+                    <div style="display:flex; gap:3px; align-items:center;">
+                        <select onchange="movePartial(${testerIdx}, ${itemIdx}, this.value, 1)" style="padding:2px; font-size:11px;">
+                            <option value="">+1→</option>
+                            ${assignments.map((other, otherIdx) =>
+                                otherIdx !== testerIdx ? `<option value="${otherIdx}">${other.name}</option>` : ''
+                            ).join('')}
+                        </select>
+                        <select onchange="moveItem(${testerIdx}, ${itemIdx}, this.value)" style="padding:2px; font-size:11px;">
+                            <option value="">הכל→</option>
+                            ${assignments.map((other, otherIdx) =>
+                                otherIdx !== testerIdx ? `<option value="${otherIdx}">${other.name}</option>` : ''
+                            ).join('')}
+                        </select>
+                    </div>
+                </li>`;
+            }).join('');
+
+            // הכן הודעת וואטסאפ
+            let whatsappMsg = `*חלוקת עבודה - ${date} - ${area}*\n\n`;
+            whatsappMsg += `👤 *${a.name}${a.isLead ? ' (אחראי)' : ''}*\n`;
+            whatsappMsg += `סה"כ: ${a.total} נבחנים\n\n`;
+            whatsappMsg += `בתי ספר:\n`;
+            a.items.forEach(item => {
+                const partInfo = item.part ? ` (חלק ${item.part}/${item.totalParts})` : '';
+                whatsappMsg += `• ${item.name}${partInfo}: ${item.count} ${item.type ? `(${item.type})` : ''}\n`;
+            });
+
+            html += `
+                <div class="tester-assignment" style="${isOverLimit ? 'border: 2px solid #f44336; background: #ffebee;' : ''}">
+                    <h4>
+                        ${a.name} ${a.isLead ? '👑' : ''}
+                        <span class="total" style="${isOverLimit ? 'background:#f44336;' : ''}">${a.total} נבחנים ${isOverLimit ? '⚠️' : ''}</span>
+                    </h4>
+                    <ul style="list-style:none; padding:0; margin:0;">${itemsList}</ul>
+                    <button class="btn-send-assignment" onclick="sendAssignment('${encodeURIComponent(whatsappMsg)}')" ${isOverLimit ? 'disabled style="opacity:0.5;"' : ''}>
+                        📱 שלח בוואטסאפ
+                    </button>
+                </div>
+            `;
+        });
+
+        // הוסף סיכום
+        const totals = assignments.map(a => a.total);
+        const min = Math.min(...totals);
+        const max = Math.max(...totals);
+        const diff = max - min;
+
+        let statusMsg, statusColor;
+        if(hasOverflow) {
+            statusMsg = '❌ יש בוחנים עם יותר מ-10 - יש לתקן!';
+            statusColor = '#ffebee';
+        } else if(diff <= 1) {
+            statusMsg = '✅ חלוקה שווה!';
+            statusColor = '#e8f5e9';
+        } else if(diff <= 2) {
+            statusMsg = '👍 חלוקה סבירה';
+            statusColor = '#fff3e0';
+        } else {
+            statusMsg = '⚠️ יש הפרש - שקול התאמה ידנית';
+            statusColor = '#fff3e0';
+        }
+
+        html += `
+            <div style="margin-top:15px; padding:10px; background:${statusColor}; border-radius:5px;">
+                <strong>📊 סיכום:</strong><br>
+                הפרש מקסימלי בין בוחנים: ${diff} נבחנים<br>
+                ${statusMsg}
+            </div>
+        `;
+
+        output.innerHTML = html;
+        document.getElementById('distributeResult').style.display = 'block';
+    }
+
+    function sendAssignment(encodedMsg) {
+        const msg = decodeURIComponent(encodedMsg);
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // העברת פריט שלם מבוחן לבוחן אחר
+    function moveItem(fromTesterIdx, itemIdx, toTesterIdx) {
+        if(toTesterIdx === '' || toTesterIdx === null) return;
+
+        toTesterIdx = parseInt(toTesterIdx);
+        const item = currentAssignments[fromTesterIdx].items[itemIdx];
+        const count = item.count;
+
+        // הסר מהמקור
+        currentAssignments[fromTesterIdx].items.splice(itemIdx, 1);
+        currentAssignments[fromTesterIdx].total -= count;
+
+        // בדוק אם כבר יש פריט דומה אצל היעד
+        const existingItem = currentAssignments[toTesterIdx].items.find(i =>
+            i.name === item.name && i.type === item.type
+        );
+
+        if(existingItem) {
+            existingItem.count += count;
+        } else {
+            currentAssignments[toTesterIdx].items.push(item);
+        }
+        currentAssignments[toTesterIdx].total += count;
+
+        // רענן תצוגה
+        displayDistribution(currentAssignments);
+    }
+
+    // העברת כמות חלקית מפריט
+    function movePartial(fromTesterIdx, itemIdx, toTesterIdx, amount) {
+        if(toTesterIdx === '' || toTesterIdx === null) return;
+
+        toTesterIdx = parseInt(toTesterIdx);
+        amount = parseInt(amount);
+        const item = currentAssignments[fromTesterIdx].items[itemIdx];
+
+        if(amount >= item.count) {
+            // אם מעבירים את הכל, פשוט השתמש ב-moveItem
+            moveItem(fromTesterIdx, itemIdx, toTesterIdx);
+            return;
+        }
+
+        // הפחת מהמקור
+        item.count -= amount;
+        currentAssignments[fromTesterIdx].total -= amount;
+
+        // הוסף ליעד - בדוק אם כבר יש פריט דומה
+        const existingItem = currentAssignments[toTesterIdx].items.find(i =>
+            i.name === item.name && i.type === item.type
+        );
+
+        if(existingItem) {
+            existingItem.count += amount;
+        } else {
+            currentAssignments[toTesterIdx].items.push({
+                name: item.name,
+                count: amount,
+                type: item.type,
+                original: item.original || item.name
+            });
+        }
+        currentAssignments[toTesterIdx].total += amount;
+
+        // רענן תצוגה
+        displayDistribution(currentAssignments);
+    }
+
+    // סגור modal בלחיצה מחוץ
+    document.getElementById('distributeModal')?.addEventListener('click', function(e) {
+        if(e.target === this) closeDistributeModal();
+    });
 </script>
 </body>
 </html>
