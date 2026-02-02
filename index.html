@@ -140,6 +140,7 @@
     </div>
 
     <div class="header-section">
+        <img src="logo.png" alt="סמכות רישוי צה״ל" style="width: 80px; height: auto; margin-bottom: 5px;">
         <h1 class="main-title" id="dynamicTitle">סידור עבודה ליום ...</h1>
         <div class="sub-title" id="dynamicTesters">הבוחנים: ...</div>
     </div>
@@ -156,22 +157,24 @@
                 <col style="width: 4%;"><col style="width: 4%;"><col style="width: 4%;"><col style="width: 4%;"> <!-- עבר: צבא שונות ואוצ'ר קד"צ -->
                 <col style="width: 6%;"> <!-- שעה -->
                 <col style="width: 12%;"> <!-- הערות -->
+                <col style="width: 5%;"> <!-- כמות בפועל -->
                 <col style="width: 5%;"> <!-- כמות מאושרת -->
                 <col style="width: 5%;"> <!-- כמות מבוקשת -->
                 <col style="width: 8%;"> <!-- מס' רכב -->
                 <col style="width: 5%;"> <!-- סוג רכב -->
-                <col style="width: 19%;"> <!-- בי"ס -->
+                <col style="width: 15%;"> <!-- בי"ס -->
             </colgroup>
             <thead>
                 <tr>
                     <th colspan="8">ביצוע</th>
                     <th rowspan="2">שעה</th>
                     <th rowspan="2">הערות</th>
-                    <th colspan="5">תכנון</th>
+                    <th colspan="6">תכנון</th>
                 </tr>
                 <tr>
                     <th colspan="4">נכשל</th>
                     <th colspan="4">עבר</th>
+                    <th>כמות בפועל</th>
                     <th>כמות מאושרת</th>
                     <th>כמות מבוקשת</th>
                     <th>מס' רכב</th>
@@ -181,7 +184,7 @@
                 <tr style="font-size: 10px;">
                     <th>צבא</th><th>שונות</th><th>ואוצ'ר</th><th>קד"צ</th>
                     <th>צבא</th><th>שונות</th><th>ואוצ'ר</th><th>קד"צ</th>
-                    <th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+                    <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
                 </tr>
             </thead>
             <tbody id="planningTableBody"></tbody>
@@ -195,7 +198,7 @@
                     <td><input class="tbl-input" id="sumPassOther" readonly></td>
                     <td><input class="tbl-input" id="sumPassVoucher" readonly></td>
                     <td><input class="tbl-input" id="sumPassKadatz" readonly></td>
-                    <td colspan="7" style="text-align: right; padding-right: 10px; font-weight: bold;">
+                    <td colspan="8" style="text-align: right; padding-right: 10px; font-weight: bold;">
                         סה"כ ביצוע: עברו <span id="totalPass" style="color: green;">0</span> | נכשלו <span id="totalFail" style="color: red;">0</span> | סה"כ <span id="totalAll" style="color: blue;">0</span>
                     </td>
                 </tr>
@@ -323,7 +326,7 @@
     window.name = "main_dashboard";
 
     const schoolMap = {
-        "באר שבע": ["שרייבר", "יובלי", "על גלגלים", "יחד", "איציק", "ב.ה 6930", "ליין בהד 6", "איחוד"],
+        "באר שבע": ["שרייבר", "יובלי", "על גלגלים", "יחד", "איציק", "ב.ה 6930", "ליין בהד 6", "איחוד", "חה\"א"],
         "אופקים": ["ב.ה 6930", "אופקים", "שי אופקים"],
         "נתיבות": ["שי אופקים", "נתיבות"],
         "דימונה": ["על גלגלים", "דימונה", "עיון"],
@@ -565,6 +568,7 @@
             <td><input class="tbl-input pass-kadatz plan-input" type="number" oninput="calcTotals()"></td>
             <td><input type="time" class="tbl-input plan-input"></td>
             <td><input class="tbl-input plan-input" placeholder="הערות"></td>
+            <td><input type="number" class="tbl-input count-actual plan-input"></td>
             <td><input type="number" class="tbl-input count-approved plan-input"></td>
             <td><input type="number" class="tbl-input count-requested plan-input"></td>
             <td><input class="tbl-input plan-input" placeholder="מס' רכב"></td>
@@ -869,29 +873,50 @@
         document.getElementById('distributeModal').classList.remove('active');
     }
 
+    // פונקציה לחישוב משקל מבחן לפי דרגה
+    function getTestWeight(vehicleType) {
+        if(vehicleType === 'D') return 2; // D נחשב כ-2 מבחנים
+        if(['A', 'A1', 'A2'].includes(vehicleType)) return 1/3; // אופנוע נחשב כ-1/3 מבחן
+        return 1; // רגיל
+    }
+
     function loadSchoolsFromPlan() {
         const schoolsList = document.getElementById('schoolsList');
         const rows = document.querySelectorAll('#planningTableBody tr');
         let schools = [];
         let total = 0;
+        let weightedTotal = 0;
 
         rows.forEach((row, idx) => {
             const schoolSelect = row.querySelector('.school-select');
             const schoolOther = row.querySelector('.school-other');
-            const approvedInput = row.querySelector('.count-approved');
+            const actualInput = row.querySelector('.count-actual');
             const vehicleSelect = row.querySelector('select[class*="plan-input"]:not(.school-select)');
+            const timeInput = row.querySelector('input[type="time"]');
 
             let schoolName = '';
             if(schoolSelect) {
                 schoolName = schoolSelect.value === 'other' ? (schoolOther?.value || '') : schoolSelect.value;
             }
 
-            const approved = parseInt(approvedInput?.value) || 0;
+            const actual = parseInt(actualInput?.value) || 0;
             const vehicleType = vehicleSelect?.value || '';
+            const time = timeInput?.value || '99:99'; // אם אין שעה, שים בסוף
 
-            if(schoolName && approved > 0) {
-                schools.push({ name: schoolName, count: approved, type: vehicleType, idx: idx });
-                total += approved;
+            if(schoolName && actual > 0) {
+                const weight = getTestWeight(vehicleType);
+                const weightedCount = actual * weight;
+                schools.push({
+                    name: schoolName,
+                    count: actual,
+                    type: vehicleType,
+                    idx: idx,
+                    time: time,
+                    weight: weight,
+                    weightedCount: weightedCount
+                });
+                total += actual;
+                weightedTotal += weightedCount;
             }
         });
 
@@ -901,18 +926,22 @@
             return;
         }
 
-        schoolsList.innerHTML = schools.map((s, i) => `
-            <div style="display:flex; justify-content:space-between; padding:5px; background:white; margin:3px 0; border-radius:3px; ${s.count > MAX_PER_TESTER ? 'border: 2px solid orange;' : ''}">
-                <span>${s.name} ${s.type ? `(${s.type})` : ''} ${s.count > MAX_PER_TESTER ? '⚠️' : ''}</span>
+        schoolsList.innerHTML = schools.map((s, i) => {
+            let weightInfo = '';
+            if(s.type === 'D') weightInfo = ' (×2)';
+            else if(['A', 'A1', 'A2'].includes(s.type)) weightInfo = ' (×⅓)';
+
+            return `<div style="display:flex; justify-content:space-between; padding:5px; background:white; margin:3px 0; border-radius:3px; ${s.count > MAX_PER_TESTER ? 'border: 2px solid orange;' : ''}">
+                <span>${s.name} ${s.type ? `(${s.type})` : ''}${weightInfo} ${s.time !== '99:99' ? `⏰${s.time}` : ''} ${s.count > MAX_PER_TESTER ? '⚠️' : ''}</span>
                 <span style="font-weight:bold;">${s.count} נבחנים</span>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
 
         if(schools.some(s => s.count > MAX_PER_TESTER)) {
             schoolsList.innerHTML += `<p style="color:orange; font-size:12px; margin-top:5px;">⚠️ יש בתי ספר עם יותר מ-10 נבחנים - יפוצלו בין בוחנים</p>`;
         }
 
-        document.getElementById('totalExaminees').textContent = total;
+        document.getElementById('totalExaminees').textContent = total + ` (משוקלל: ${weightedTotal.toFixed(1)})`;
 
         // שמור את הנתונים לשימוש בחישוב
         window.schoolsData = schools;
@@ -938,11 +967,10 @@
 
         const leadTesterLess = document.getElementById('leadTesterLess').checked;
 
-        // חישוב סה"כ נבחנים
+        // חישוב סה"כ נבחנים ומשקל משוקלל
         const totalExaminees = schools.reduce((sum, s) => sum + s.count, 0);
+        const totalWeighted = schools.reduce((sum, s) => sum + (s.weightedCount || s.count), 0);
         const numTesters = selectedTesters.length;
-        // הקיבולת המקסימלית היא תמיד numTesters × 10
-        // (האחראי מקבל פחות רק אם יש מקום, אחרת כולם מקבלים שווה)
         const maxCapacity = numTesters * MAX_PER_TESTER;
 
         // בדיקה אם יש מספיק בוחנים
@@ -951,116 +979,81 @@
             return;
         }
 
-        // חישוב יעד אידיאלי לכל בוחן
-        // בוחן אחראי מקבל פחות 1 רק אם אפשר (האחרים לא עוברים את המקסימום)
+        // חישוב יעד משוקלל לכל בוחן
         const numRegularTesters = numTesters - 1;
+        const baseWeightedPerTester = totalWeighted / numTesters;
 
-        // חלוקה בסיסית שווה
-        const basePerTester = Math.floor(totalExaminees / numTesters);
-        const remainder = totalExaminees % numTesters;
-
-        let leadTarget;
-
+        let leadWeightedTarget;
         if(leadTesterLess && numTesters > 1) {
-            // בדוק אם האחראי יכול לקבל פחות 1
-            // אם האחראי מקבל (basePerTester - 1), נשאר לאחרים (totalExaminees - basePerTester + 1)
-            const potentialLeadTarget = Math.max(0, basePerTester - 1);
-            const remainingIfLeadGetsLess = totalExaminees - potentialLeadTarget;
-            const maxNeededPerRegular = Math.ceil(remainingIfLeadGetsLess / numRegularTesters);
-
-            // אם האחרים לא יעברו את המקסימום, האחראי יכול לקבל פחות
-            if(maxNeededPerRegular <= MAX_PER_TESTER) {
-                leadTarget = potentialLeadTarget;
-            } else {
-                // אין מקום - כולם מקבלים שווה
-                leadTarget = basePerTester;
-            }
+            // האחראי מקבל פחות - נוריד משקל של מבחן 1 רגיל
+            leadWeightedTarget = Math.max(0, baseWeightedPerTester - 1);
         } else {
-            leadTarget = basePerTester;
+            leadWeightedTarget = baseWeightedPerTester;
         }
 
-        // חשב כמה נשאר לאחרים
-        const remainingForOthers = totalExaminees - leadTarget;
-        const regularBase = Math.floor(remainingForOthers / numRegularTesters);
-        const regularExtra = remainingForOthers % numRegularTesters;
-
         // יצירת מבנה הקצאה
-        let extraCounter = regularExtra;
         const assignments = selectedTesters.map((name, idx) => {
-            let target;
-            if(idx === 0) {
-                target = leadTarget;
-            } else {
-                // בוחנים רגילים מקבלים regularBase, וחלקם מקבלים +1 לחלק את השארית
-                if(extraCounter > 0) {
-                    target = regularBase + 1;
-                    extraCounter--;
-                } else {
-                    target = regularBase;
-                }
-            }
             return {
                 name: name,
                 isLead: idx === 0,
-                items: [], // פריטים (בי"ס או חלק מבי"ס)
+                items: [],
                 total: 0,
-                target: target
+                weightedTotal: 0,
+                targetWeighted: idx === 0 ? leadWeightedTarget : (totalWeighted - leadWeightedTarget) / numRegularTesters
             };
         });
 
-        // פצל בתי ספר גדולים ליחידות של מקסימום 10
-        let workItems = [];
-        schools.forEach(school => {
-            if(school.count <= MAX_PER_TESTER) {
-                workItems.push({ ...school, original: school.name });
-            } else {
-                // פצל בית ספר גדול
-                let remaining = school.count;
-                let partNum = 1;
-                while(remaining > 0) {
-                    const chunk = Math.min(remaining, MAX_PER_TESTER);
-                    workItems.push({
-                        name: school.name,
-                        count: chunk,
-                        type: school.type,
-                        original: school.name,
-                        part: partNum,
-                        totalParts: Math.ceil(school.count / MAX_PER_TESTER)
-                    });
-                    remaining -= chunk;
-                    partNum++;
-                }
-            }
+        // מיין בתי ספר לפי שעה (מוקדם קודם) ואז לפי משקל (גדול קודם)
+        let workItems = [...schools].sort((a, b) => {
+            // קודם לפי שעה
+            if(a.time !== b.time) return a.time.localeCompare(b.time);
+            // אם אותה שעה, לפי משקל יורד
+            return (b.weightedCount || b.count) - (a.weightedCount || a.count);
         });
 
-        // מיין מהגדול לקטן
-        workItems.sort((a, b) => b.count - a.count);
-
-        // אלגוריתם חלוקה משופר - מחלק נבחן אחרי נבחן
-        // כל workItem יכול להתפצל בין כמה בוחנים
+        // אלגוריתם חלוקה משופר עם משקלים ושעות
         workItems.forEach(item => {
             let remaining = item.count;
+            const weight = item.weight || 1;
 
             while(remaining > 0) {
-                // מצא את הבוחן הכי מתאים (עם הכי הרבה מקום עד המקסימום)
+                // מצא את הבוחן הכי מתאים:
+                // 1. יש לו מקום (לא עובר 10)
+                // 2. הכי רחוק מהיעד המשוקלל שלו
                 let bestIdx = -1;
-                let bestRoom = 0;
+                let bestScore = -Infinity;
 
                 assignments.forEach((a, idx) => {
                     const room = MAX_PER_TESTER - a.total;
-                    if(room > bestRoom) {
-                        bestRoom = room;
+                    if(room <= 0) return;
+
+                    // ציון = כמה רחוק מהיעד המשוקלל
+                    const remainingToTarget = a.targetWeighted - a.weightedTotal;
+                    if(remainingToTarget > bestScore) {
+                        bestScore = remainingToTarget;
                         bestIdx = idx;
                     }
                 });
 
-                if(bestIdx === -1 || bestRoom === 0) {
+                if(bestIdx === -1) {
+                    // אם אין מקום לאף אחד, קח את מי שיש לו הכי פחות
+                    let minTotal = Infinity;
+                    assignments.forEach((a, idx) => {
+                        if(a.total < minTotal) {
+                            minTotal = a.total;
+                            bestIdx = idx;
+                        }
+                    });
+                }
+
+                if(bestIdx === -1) {
                     console.error(`אין מקום לשאר הנבחנים מ-${item.name}`);
                     break;
                 }
 
                 // כמה נבחנים להקצות לבוחן הזה
-                const toAssign = Math.min(remaining, bestRoom);
+                const room = MAX_PER_TESTER - assignments[bestIdx].total;
+                const toAssign = Math.min(remaining, Math.max(1, room));
 
                 // בדוק אם כבר יש פריט מאותו בית ספר אצל הבוחן הזה
                 const existingItem = assignments[bestIdx].items.find(i =>
@@ -1069,18 +1062,28 @@
 
                 if(existingItem) {
                     existingItem.count += toAssign;
+                    existingItem.weightedCount = (existingItem.weightedCount || 0) + toAssign * weight;
                 } else {
                     assignments[bestIdx].items.push({
                         name: item.name,
                         count: toAssign,
                         type: item.type,
+                        time: item.time,
+                        weight: weight,
+                        weightedCount: toAssign * weight,
                         original: item.original || item.name
                     });
                 }
 
                 assignments[bestIdx].total += toAssign;
+                assignments[bestIdx].weightedTotal += toAssign * weight;
                 remaining -= toAssign;
             }
+        });
+
+        // מיין פריטים בכל בוחן לפי שעה
+        assignments.forEach(a => {
+            a.items.sort((x, y) => (x.time || '99:99').localeCompare(y.time || '99:99'));
         });
 
         // בדיקת שלמות - ודא שכל הנבחנים הוקצו
@@ -1094,6 +1097,52 @@
 
         // הצג תוצאות
         displayDistribution(assignments);
+    }
+
+    // פונקציה לחישוב משך מבחן בדקות לפי סוג רכב
+    function getTestDuration(vehicleType) {
+        if(vehicleType === 'D') return 40; // D = 2 מבחנים רגילים = 40 דקות
+        if(['A', 'A1', 'A2'].includes(vehicleType)) return 7; // A = ⅓ מבחן = ~7 דקות
+        return 20; // מבחן רגיל = 20 דקות
+    }
+
+    // פונקציה להוספת דקות לשעה (פורמט HH:MM)
+    function addMinutesToTime(timeStr, minutes) {
+        if(!timeStr || timeStr === '99:99') return null;
+        const [hours, mins] = timeStr.split(':').map(Number);
+        const totalMins = hours * 60 + mins + minutes;
+        const newHours = Math.floor(totalMins / 60) % 24;
+        const newMins = totalMins % 60;
+        return `${String(newHours).padStart(2, '0')}:${String(newMins).padStart(2, '0')}`;
+    }
+
+    // פונקציה לחישוב לוח זמנים לבוחן
+    function calculateTesterSchedule(items) {
+        const schedule = [];
+        let currentTime = null;
+
+        // מיין לפי שעה
+        const sortedItems = [...items].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+
+        sortedItems.forEach(item => {
+            const startTime = item.time && item.time !== '99:99' ? item.time : currentTime;
+            const duration = getTestDuration(item.type) * item.count;
+            const endTime = startTime ? addMinutesToTime(startTime, duration) : null;
+
+            schedule.push({
+                ...item,
+                startTime: startTime,
+                endTime: endTime,
+                duration: duration
+            });
+
+            // עדכן זמן נוכחי לסיום בית הספר הזה
+            if(endTime) {
+                currentTime = endTime;
+            }
+        });
+
+        return schedule;
     }
 
     function displayDistribution(assignments) {
@@ -1115,11 +1164,33 @@
 
         assignments.forEach((a, testerIdx) => {
             const isOverLimit = a.total > MAX_PER_TESTER;
-            const itemsList = a.items.map((item, itemIdx) => {
+            const weightedTotal = a.weightedTotal?.toFixed(1) || a.total;
+
+            // חשב לוח זמנים לבוחן
+            const schedule = calculateTesterSchedule(a.items);
+
+            // חשב זמן סיום כולל
+            const lastItem = schedule[schedule.length - 1];
+            const totalEndTime = lastItem?.endTime || '';
+            const firstStartTime = schedule[0]?.startTime || '';
+
+            const itemsList = schedule.map((item, itemIdx) => {
                 const partInfo = item.part ? ` (חלק ${item.part}/${item.totalParts})` : '';
+                let weightInfo = '';
+                if(item.type === 'D') weightInfo = '<span style="color:#d32f2f;font-size:10px;">(×2)</span>';
+                else if(['A', 'A1', 'A2'].includes(item.type)) weightInfo = '<span style="color:#4caf50;font-size:10px;">(×⅓)</span>';
+
+                // הצג טווח זמנים
+                let timeDisplay = '';
+                if(item.startTime && item.endTime) {
+                    timeDisplay = `<span style="color:#1565c0; font-weight:bold;">⏰${item.startTime}-${item.endTime}</span>`;
+                } else if(item.startTime) {
+                    timeDisplay = `<span style="color:#1565c0;">⏰${item.startTime}</span>`;
+                }
+
                 // כפתורי +/- להעברת נבחן בודד
                 return `<li style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #eee;">
-                    <span>${item.name}${partInfo}: <strong>${item.count}</strong> ${item.type ? `(${item.type})` : ''}</span>
+                    <span>${timeDisplay} ${item.name}${partInfo}: <strong>${item.count}</strong> ${item.type ? `(${item.type})` : ''} ${weightInfo} <span style="color:#888;font-size:10px;">[${item.duration} דק']</span></span>
                     <div style="display:flex; gap:3px; align-items:center;">
                         <select onchange="movePartial(${testerIdx}, ${itemIdx}, this.value, 1)" style="padding:2px; font-size:11px;">
                             <option value="">+1→</option>
@@ -1137,22 +1208,36 @@
                 </li>`;
             }).join('');
 
-            // הכן הודעת וואטסאפ
+            // חשב סה"כ זמן עבודה
+            const totalDuration = schedule.reduce((sum, item) => sum + item.duration, 0);
+            const totalHours = Math.floor(totalDuration / 60);
+            const totalMins = totalDuration % 60;
+            const durationStr = totalHours > 0 ? `${totalHours} שעות ו-${totalMins} דקות` : `${totalMins} דקות`;
+
+            // הכן הודעת וואטסאפ עם לוח זמנים
             let whatsappMsg = `*חלוקת עבודה - ${date} - ${area}*\n\n`;
             whatsappMsg += `👤 *${a.name}${a.isLead ? ' (אחראי)' : ''}*\n`;
-            whatsappMsg += `סה"כ: ${a.total} נבחנים\n\n`;
-            whatsappMsg += `בתי ספר:\n`;
-            a.items.forEach(item => {
+            whatsappMsg += `סה"כ: ${a.total} נבחנים (~${durationStr})\n`;
+            if(firstStartTime && totalEndTime) {
+                whatsappMsg += `🕐 ${firstStartTime} - ${totalEndTime}\n`;
+            }
+            whatsappMsg += `\nבתי ספר:\n`;
+            schedule.forEach(item => {
                 const partInfo = item.part ? ` (חלק ${item.part}/${item.totalParts})` : '';
-                whatsappMsg += `• ${item.name}${partInfo}: ${item.count} ${item.type ? `(${item.type})` : ''}\n`;
+                const timeRange = item.startTime && item.endTime ? `${item.startTime}-${item.endTime}` : (item.startTime || '');
+                whatsappMsg += `• ${timeRange ? `⏰${timeRange} ` : ''}${item.name}${partInfo}: ${item.count} ${item.type ? `(${item.type})` : ''}\n`;
             });
 
             html += `
                 <div class="tester-assignment" style="${isOverLimit ? 'border: 2px solid #f44336; background: #ffebee;' : ''}">
                     <h4>
                         ${a.name} ${a.isLead ? '👑' : ''}
-                        <span class="total" style="${isOverLimit ? 'background:#f44336;' : ''}">${a.total} נבחנים ${isOverLimit ? '⚠️' : ''}</span>
+                        <span class="total" style="${isOverLimit ? 'background:#f44336;' : ''}">${a.total} נבחנים (משוקלל: ${weightedTotal}) ${isOverLimit ? '⚠️' : ''}</span>
                     </h4>
+                    <div style="background:#e3f2fd; padding:5px 10px; border-radius:3px; margin-bottom:8px; font-size:12px;">
+                        🕐 סה"כ זמן עבודה: <strong>${durationStr}</strong>
+                        ${firstStartTime && totalEndTime ? ` | ${firstStartTime} עד ${totalEndTime}` : ''}
+                    </div>
                     <ul style="list-style:none; padding:0; margin:0;">${itemsList}</ul>
                     <button class="btn-send-assignment" onclick="sendAssignment('${encodeURIComponent(whatsappMsg)}')" ${isOverLimit ? 'disabled style="opacity:0.5;"' : ''}>
                         📱 שלח בוואטסאפ
@@ -1163,18 +1248,22 @@
 
         // הוסף סיכום
         const totals = assignments.map(a => a.total);
+        const weightedTotals = assignments.map(a => a.weightedTotal || a.total);
         const min = Math.min(...totals);
         const max = Math.max(...totals);
         const diff = max - min;
+        const weightedMin = Math.min(...weightedTotals);
+        const weightedMax = Math.max(...weightedTotals);
+        const weightedDiff = (weightedMax - weightedMin).toFixed(1);
 
         let statusMsg, statusColor;
         if(hasOverflow) {
             statusMsg = '❌ יש בוחנים עם יותר מ-10 - יש לתקן!';
             statusColor = '#ffebee';
-        } else if(diff <= 1) {
-            statusMsg = '✅ חלוקה שווה!';
+        } else if(parseFloat(weightedDiff) <= 1) {
+            statusMsg = '✅ חלוקה שווה (לפי משקל)!';
             statusColor = '#e8f5e9';
-        } else if(diff <= 2) {
+        } else if(parseFloat(weightedDiff) <= 2) {
             statusMsg = '👍 חלוקה סבירה';
             statusColor = '#fff3e0';
         } else {
@@ -1185,7 +1274,8 @@
         html += `
             <div style="margin-top:15px; padding:10px; background:${statusColor}; border-radius:5px;">
                 <strong>📊 סיכום:</strong><br>
-                הפרש מקסימלי בין בוחנים: ${diff} נבחנים<br>
+                הפרש מקסימלי: ${diff} נבחנים (משוקלל: ${weightedDiff})<br>
+                <small style="color:#666;">D=×2, A/A1/A2=×⅓</small><br>
                 ${statusMsg}
             </div>
         `;
