@@ -1749,7 +1749,8 @@
                 // ייצא רק את הנתונים של הבוחן הנבחר
                 if(rowTester === testerName) {
                     const inputs = row.querySelectorAll('input.exam-input');
-                    const selects = row.querySelectorAll('select.exam-input');
+                    const allSelects = row.querySelectorAll('select.exam-input');
+                    // סדר הselects: 0=vehicle-num, 1=grade, 2=population, 3=tester, 4=testNum, 5=result
 
                     examData.push({
                         school: schoolName,
@@ -1757,8 +1758,8 @@
                         id: inputs[0]?.value || '', // ת.ז
                         name: inputs[1]?.value || '', // שם
                         grade: row.querySelector('.grade-select')?.value || '',
-                        population: selects[1]?.value || '', // אוכלוסיה
-                        testNum: selects[2]?.value || '', // מספר מבחן
+                        population: allSelects[2]?.value || '', // אוכלוסיה (אינדקס 2)
+                        testNum: allSelects[4]?.value || '', // מספר מבחן (אינדקס 4)
                         result: result === 'עבר' ? 'pass' : 'fail'
                     });
                 }
@@ -1937,13 +1938,14 @@
                 const gradeSelect = targetRow.querySelector('.grade-select');
                 if(gradeSelect && ex.grade) gradeSelect.value = ex.grade;
 
-                const selects = targetRow.querySelectorAll('select.exam-input');
-                if(selects[1] && ex.population) selects[1].value = ex.population; // אוכלוסיה
+                // סדר הselects: 0=vehicle-num, 1=grade, 2=population, 3=tester, 4=testNum, 5=result
+                const allSelects = targetRow.querySelectorAll('select.exam-input');
+                if(allSelects[2] && ex.population) allSelects[2].value = ex.population; // אוכלוסיה (אינדקס 2)
 
                 const testerSelect = targetRow.querySelector('.exam-tester-select');
                 if(testerSelect) testerSelect.value = imported.tester;
 
-                if(selects[2] && ex.testNum) selects[2].value = ex.testNum; // מספר מבחן
+                if(allSelects[4] && ex.testNum) allSelects[4].value = ex.testNum; // מספר מבחן (אינדקס 4)
 
                 const resultSelect = targetRow.querySelector('.result-select');
                 if(resultSelect) {
