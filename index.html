@@ -1748,20 +1748,22 @@
 
                 // ייצא רק את הנתונים של הבוחן הנבחר
                 if(rowTester === testerName) {
-                    const inputs = row.querySelectorAll('input.exam-input');
-                    const allSelects = row.querySelectorAll('select.exam-input');
-                    // סדר הselects: 0=vehicle-num, 1=grade, 2=population, 3=tester, 4=testNum, 5=result
+                    // גישה ישירה לעמודות לפי מיקום
+                    const cells = row.querySelectorAll('td');
+                    // עמודות: 0=מס', 1=ביה"ס, 2=מס'רכב, 3=ת.ז, 4=שם, 5=דרגה, 6=אוכלוסיה, 7=בוחן, 8=מבחן, 9=תוצאה
 
-                    examData.push({
+                    const exportItem = {
                         school: schoolName,
-                        vehicleNum: row.querySelector('.vehicle-num-select')?.value || '',
-                        id: inputs[0]?.value || '', // ת.ז
-                        name: inputs[1]?.value || '', // שם
-                        grade: row.querySelector('.grade-select')?.value || '',
-                        population: allSelects[2]?.value || '', // אוכלוסיה (אינדקס 2)
-                        testNum: allSelects[4]?.value || '', // מספר מבחן (אינדקס 4)
+                        vehicleNum: cells[2]?.querySelector('select')?.value || '',
+                        id: cells[3]?.querySelector('input')?.value || '',
+                        name: cells[4]?.querySelector('input')?.value || '',
+                        grade: cells[5]?.querySelector('select')?.value || '',
+                        population: cells[6]?.querySelector('select')?.value || '',
+                        testNum: cells[8]?.querySelector('select')?.value || '',
                         result: result === 'עבר' ? 'pass' : 'fail'
-                    });
+                    };
+                    console.log('מייצא:', exportItem);
+                    examData.push(exportItem);
                 }
             }
         });
@@ -1931,23 +1933,28 @@
                     vehicleSelect.value = ex.vehicleNum;
                 }
 
-                const inputs = targetRow.querySelectorAll('input.exam-input');
-                if(inputs[0]) inputs[0].value = ex.id || ''; // ת.ז
-                if(inputs[1]) inputs[1].value = ex.name || ''; // שם
+                // גישה ישירה לעמודות לפי מיקום
+                const cells = targetRow.querySelectorAll('td');
+                // עמודות: 0=מס', 1=ביה"ס, 2=מס'רכב, 3=ת.ז, 4=שם, 5=דרגה, 6=אוכלוסיה, 7=בוחן, 8=מבחן, 9=תוצאה
 
-                const gradeSelect = targetRow.querySelector('.grade-select');
+                const idInput = cells[3]?.querySelector('input');
+                const nameInput = cells[4]?.querySelector('input');
+                const gradeSelect = cells[5]?.querySelector('select');
+                const populationSelect = cells[6]?.querySelector('select');
+                const testerSelect = cells[7]?.querySelector('select');
+                const testNumSelect = cells[8]?.querySelector('select');
+                const resultSelect = cells[9]?.querySelector('select');
+
+                console.log('מייבא לשורה:', ex);
+                console.log('שדות:', {idInput, nameInput, gradeSelect, populationSelect, testNumSelect});
+
+                if(idInput) idInput.value = ex.id || '';
+                if(nameInput) nameInput.value = ex.name || '';
                 if(gradeSelect && ex.grade) gradeSelect.value = ex.grade;
-
-                // סדר הselects: 0=vehicle-num, 1=grade, 2=population, 3=tester, 4=testNum, 5=result
-                const allSelects = targetRow.querySelectorAll('select.exam-input');
-                if(allSelects[2] && ex.population) allSelects[2].value = ex.population; // אוכלוסיה (אינדקס 2)
-
-                const testerSelect = targetRow.querySelector('.exam-tester-select');
+                if(populationSelect && ex.population) populationSelect.value = ex.population;
                 if(testerSelect) testerSelect.value = imported.tester;
+                if(testNumSelect && ex.testNum) testNumSelect.value = ex.testNum;
 
-                if(allSelects[4] && ex.testNum) allSelects[4].value = ex.testNum; // מספר מבחן (אינדקס 4)
-
-                const resultSelect = targetRow.querySelector('.result-select');
                 if(resultSelect) {
                     resultSelect.value = ex.result === 'pass' ? 'עבר' : 'נכשל';
                     checkFail(resultSelect);
