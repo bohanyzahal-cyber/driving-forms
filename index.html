@@ -16,9 +16,9 @@
         }
 
         /* עיצובים כלליים */
-        .settings-panel { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; margin-bottom: 20px; border-radius: 5px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; direction: rtl; }
+        .settings-panel { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; margin-bottom: 20px; border-radius: 5px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; direction: rtl; }
         .settings-panel input, .settings-panel select { width: 100%; padding: 6px; font-size: 14px; font-weight: bold; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .settings-title { grid-column: span 4; font-weight: bold; text-align: center; color: #0d47a1; margin-bottom: 5px; }
+        .settings-title { grid-column: span 5; font-weight: bold; text-align: center; color: #0d47a1; margin-bottom: 5px; }
         .header-section { text-align: center; margin-bottom: 10px; }
         .main-title { font-size: 20px; margin: 0; font-weight: normal; }
         .sub-title { font-size: 16px; font-weight: bold; margin-top: 3px; }
@@ -34,8 +34,8 @@
         /* שדות קלט */
         input.tbl-input, select.tbl-input { width: 100%; border: none; background: transparent; text-align: center; font-size: 12px; outline: none; font-family: inherit; padding: 0; margin: 0; height: 100%; display: block; }
         select.tbl-input { -webkit-appearance: none; appearance: none; cursor: pointer; }
-        input[type="time"] { -webkit-appearance: none; background: transparent; cursor: pointer; }
-        input[type="time"]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; }
+        input[type="time"] { -webkit-appearance: none; background: transparent; cursor: pointer; position: relative; }
+        input[type="time"]::-webkit-calendar-picker-indicator { position: absolute; left: 0; top: 0; width: 20px; height: 100%; opacity: 0.5; cursor: pointer; }
         
         /* שדה "אחר" לבי"ס */
         .school-wrapper { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -130,13 +130,15 @@
         <button class="btn-reset" onclick="resetForm()">🔄 נקה הכל</button>
         <button class="btn-pass-list" onclick="generatePassList()">🏆 צור רשימות</button>
         <button class="btn-distribute" onclick="openDistributeModal()">📊 חלק עבודה</button>
+        <button onclick="openShareModal()" style="background: #00897b;">📤 שיתוף נתונים</button>
     </div>
     <div class="settings-panel">
         <div class="settings-title">הגדרות פקודת עבודה</div>
         <div><label>יום:</label><select id="daySelect" onchange="saveHeader()"><option>א</option><option>ב</option><option>ג</option><option>ד</option><option>ה</option></select></div>
-        <div><label>תאריך:</label><input type="text" id="dateInput" placeholder="dd/mm/yy" oninput="saveHeader()"></div>
-        <div><label>אזור:</label><select id="areaSelect" onchange="handleAreaChange()"><option value="">בחר אזור...</option></select></div>
+        <div><label>תאריך:</label><input type="text" id="dateInput" placeholder="dd/mm/yy" oninput="saveHeader(); generateAreaCode()"></div>
+        <div><label>אזור:</label><select id="areaSelect" onchange="handleAreaChange(); generateAreaCode()"><option value="">בחר אזור...</option></select></div>
         <div><label>בוחנים:</label><input type="text" id="testersInput" placeholder="הקלד שמות..." oninput="saveHeader(); updateTesterSelects()"></div>
+        <div><label>קוד משותף:</label><div style="display:flex; gap:3px;"><input type="text" id="areaCode" placeholder="לחץ ליצירה" oninput="saveHeader()" style="font-weight: bold; color: #1565c0; flex:1;"><button type="button" onclick="generateAreaCode()" style="padding:5px 8px; font-size:12px; cursor:pointer;" title="צור קוד אוטומטי">🔄</button></div></div>
     </div>
 
     <div class="header-section">
@@ -234,10 +236,10 @@
     <div class="table-responsive">
         <table>
             <colgroup>
-                <col style="width: 4%;">  <col style="width: 18%;"> <col style="width: 10%;"> <col style="width: 13%;"> <col style="width: 20%;"> <col style="width: 8%;">  <col style="width: 10%;"> <col style="width: 7%;">  <col style="width: 10%;"> </colgroup>
+                <col style="width: 4%;">  <col style="width: 15%;"> <col style="width: 8%;"> <col style="width: 11%;"> <col style="width: 17%;"> <col style="width: 6%;">  <col style="width: 9%;"> <col style="width: 10%;"> <col style="width: 6%;">  <col style="width: 9%;"> </colgroup>
             <thead>
                 <tr>
-                    <th>מס'</th><th>שם ביה"ס</th><th>מס' רכב</th><th>ת.ז</th><th>שם הנבחן</th><th>דרגה</th><th>אוכלוסיה</th><th>מבחן</th><th>תוצאה</th>
+                    <th>מס'</th><th>שם ביה"ס</th><th>מס' רכב</th><th>ת.ז</th><th>שם הנבחן</th><th>דרגה</th><th>אוכלוסיה</th><th>בוחן</th><th>מבחן</th><th>תוצאה</th>
                 </tr>
             </thead>
             <tbody id="examTableBody"></tbody>
@@ -321,6 +323,51 @@
     </div>
 </div>
 
+<!-- Modal שיתוף נתונים -->
+<div class="modal-overlay" id="shareModal">
+    <div class="modal-content">
+        <div class="modal-header" style="border-color: #00897b;">
+            <h2 style="color: #00897b;">📤 שיתוף וייבוא נתונים</h2>
+            <button class="modal-close" onclick="closeShareModal()">×</button>
+        </div>
+
+        <div class="distribute-section" style="background: #e0f2f1;">
+            <h3 style="color: #00695c;">📋 קוד אזור משותף</h3>
+            <p style="font-size: 12px; color: #555;">קוד זה משותף לכל הבוחנים באותו יום ואזור:</p>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="shareAreaCode" readonly style="flex: 1; padding: 12px; font-size: 18px; font-weight: bold; text-align: center; border: 2px solid #00897b; border-radius: 5px; background: #fff;">
+                <button onclick="copyAreaCode()" style="background: #00897b; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">📋 העתק</button>
+            </div>
+        </div>
+
+        <div class="distribute-section" style="background: #e3f2fd;">
+            <h3 style="color: #1565c0;">📤 ייצוא הנתונים שלי</h3>
+            <p style="font-size: 12px; color: #555;">שלח את הנתונים שלך לבוחן האחראי:</p>
+            <div style="margin-bottom: 10px;">
+                <label style="font-size: 12px; color: #333;">שם הבוחן שלך:</label>
+                <select id="exportTesterName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; margin-top: 5px;"></select>
+            </div>
+            <button onclick="exportMyData()" style="width: 100%; background: #2196F3; color: white; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px;">
+                📋 העתק נתונים לשליחה
+            </button>
+            <div id="exportStatus" style="margin-top: 10px; text-align: center;"></div>
+        </div>
+
+        <div class="distribute-section" style="background: #e8f5e9;">
+            <h3 style="color: #2e7d32;">📥 ייבוא נתונים מבוחנים אחרים</h3>
+            <p style="font-size: 12px; color: #555;">הדבק כאן נתונים שקיבלת מבוחנים אחרים:</p>
+            <textarea id="importDataText" placeholder="הדבק כאן את הנתונים שהתקבלו מבוחן אחר..." style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; font-size: 14px; box-sizing: border-box;"></textarea>
+            <button onclick="importTesterData()" style="width: 100%; background: #4CAF50; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: 10px;">
+                ➕ הוסף נתוני בוחן
+            </button>
+            <div id="importStatus" style="margin-top: 10px; text-align: center;"></div>
+
+            <!-- רשימת בוחנים שיובאו -->
+            <div id="importedTestersList" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+</div>
+
 <script>
     // הגדרת שם חלון ראשי קבוע - חובה לתקשורת תקינה
     window.name = "main_dashboard";
@@ -378,11 +425,21 @@
             notesEl.value = localStorage.getItem('general_notes');
             autoResize(notesEl);
         }
-        updateHeader(); 
-        initTables(); 
+        updateHeader();
+        initTables();
         loadDataIntoTables();
         initSignature();
         renderOutbox();
+        loadImportedTesters();
+        // טען קוד אזור - אם שמור ותקף, השתמש בו. אחרת צור אוטומטית
+        const savedAreaCode = localStorage.getItem('header_area_code');
+        if(savedAreaCode && savedAreaCode.trim()) {
+            document.getElementById('areaCode').value = savedAreaCode;
+        }
+        // תמיד נסה ליצור קוד אם אין
+        if(!document.getElementById('areaCode').value) {
+            generateAreaCode();
+        }
     };
 
     function autoResize(textarea) { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight + 5) + 'px'; }
@@ -410,11 +467,12 @@
             const rowHtml = `<tr>
                 <td>${i}</td>
                 <td>${createSchoolCell()}</td>
+                <td><select class="tbl-input exam-input vehicle-num-select"><option value=""></option></select></td>
                 <td><input class="tbl-input exam-input"></td>
                 <td><input class="tbl-input exam-input"></td>
-                <td><input class="tbl-input exam-input"></td>
-                <td><select class="tbl-input exam-input">${typeOptions}</select></td>
+                <td><select class="tbl-input exam-input grade-select">${typeOptions}</select></td>
                 <td><select class="tbl-input exam-input">${popOptions}</select></td>
+                <td><select class="tbl-input exam-input exam-tester-select" onchange="updateTesterCounts()"><option value=""></option></select></td>
                 <td><select class="tbl-input exam-input">${testNumOptions}</select></td>
                 <td>
                     <div style="display:flex; align-items:center; justify-content:center;">
@@ -427,16 +485,156 @@
             </tr>`;
             examBody.insertAdjacentHTML('beforeend', rowHtml);
         }
+        updateExamTesterSelects();
         refreshAllSchoolSelects();
         bindEvents();
+    }
+
+    // פונקציה שמחזירה את כל המידע מטבלת התכנון לפי שם בית ספר
+    function getPlanDataBySchool(schoolName) {
+        const planRows = document.querySelectorAll('#planningTableBody tr');
+        const results = [];
+
+        planRows.forEach(row => {
+            const schoolSelect = row.querySelector('.school-select');
+            const otherInput = row.querySelector('.school-other');
+            let rowSchoolName = schoolSelect?.value || '';
+            if(rowSchoolName === 'other' && otherInput) {
+                rowSchoolName = otherInput.value;
+            }
+
+            if(rowSchoolName && rowSchoolName === schoolName) {
+                const inputs = row.querySelectorAll('input, select');
+                const vehicleNum = row.querySelector('input[placeholder="מס\' רכב"]')?.value || '';
+                const vehicleTypeSelect = row.querySelector('select.plan-input:not(.school-select)');
+                const vehicleType = vehicleTypeSelect?.value || '';
+
+                results.push({
+                    vehicleNum: vehicleNum,
+                    vehicleType: vehicleType
+                });
+            }
+        });
+
+        return results;
+    }
+
+    // פונקציה שמעדכנת מספר רכב ודרגה כשבוחרים בית ספר בטבלת הפירוט
+    function onExamSchoolChange(selectElement) {
+        const row = selectElement.closest('tr');
+        const otherInput = row.querySelector('.school-other');
+        let schoolName = selectElement.value;
+        if(schoolName === 'other' && otherInput) {
+            schoolName = otherInput.value;
+        }
+
+        const vehicleNumSelect = row.querySelector('.vehicle-num-select');
+        const gradeSelect = row.querySelector('.grade-select');
+
+        if(!schoolName || schoolName === 'other') {
+            // נקה את הבחירות
+            vehicleNumSelect.innerHTML = '<option value=""></option>';
+            return;
+        }
+
+        // קבל מידע מטבלת התכנון
+        const planData = getPlanDataBySchool(schoolName);
+
+        if(planData.length === 0) {
+            vehicleNumSelect.innerHTML = '<option value=""></option>';
+            return;
+        }
+
+        // בנה רשימת מספרי רכב
+        const uniqueVehicles = [...new Set(planData.map(p => p.vehicleNum).filter(v => v))];
+        let vehicleOptions = '<option value=""></option>';
+        uniqueVehicles.forEach(v => {
+            vehicleOptions += `<option value="${v}">${v}</option>`;
+        });
+        vehicleNumSelect.innerHTML = vehicleOptions;
+
+        // אם יש רק מספר רכב אחד, בחר אותו אוטומטית
+        if(uniqueVehicles.length === 1) {
+            vehicleNumSelect.value = uniqueVehicles[0];
+        }
+
+        // עדכן דרגה לפי הראשון (או אם יש רק אחד)
+        if(planData.length >= 1 && planData[0].vehicleType) {
+            gradeSelect.value = planData[0].vehicleType;
+        }
+
+        saveExamData();
+    }
+
+    // פונקציה לעדכון דרגה כשבוחרים מספר רכב
+    function onVehicleNumChange(selectElement) {
+        const row = selectElement.closest('tr');
+        const schoolSelect = row.querySelector('.school-select');
+        const otherInput = row.querySelector('.school-other');
+        let schoolName = schoolSelect?.value || '';
+        if(schoolName === 'other' && otherInput) {
+            schoolName = otherInput.value;
+        }
+
+        const vehicleNum = selectElement.value;
+        const gradeSelect = row.querySelector('.grade-select');
+
+        if(!schoolName || !vehicleNum) return;
+
+        // מצא את הדרגה המתאימה לשילוב בית ספר + מספר רכב
+        const planRows = document.querySelectorAll('#planningTableBody tr');
+        planRows.forEach(planRow => {
+            const planSchoolSelect = planRow.querySelector('.school-select');
+            const planOtherInput = planRow.querySelector('.school-other');
+            let planSchoolName = planSchoolSelect?.value || '';
+            if(planSchoolName === 'other' && planOtherInput) {
+                planSchoolName = planOtherInput.value;
+            }
+
+            const planVehicleNum = planRow.querySelector('input[placeholder="מס\' רכב"]')?.value || '';
+
+            if(planSchoolName === schoolName && planVehicleNum === vehicleNum) {
+                const vehicleTypeSelect = planRow.querySelector('select.plan-input:not(.school-select)');
+                if(vehicleTypeSelect?.value) {
+                    gradeSelect.value = vehicleTypeSelect.value;
+                }
+            }
+        });
+
+        saveExamData();
     }
 
     function bindEvents() {
         document.querySelectorAll('.plan-input').forEach(el => el.addEventListener('input', savePlanData));
         document.querySelectorAll('.exam-input').forEach(el => el.addEventListener('input', saveExamData));
         document.querySelectorAll('.tester-input').forEach(el => el.addEventListener('input', saveTesterData));
-        document.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => { toggleOtherInput(e.target); saveAllData(); }));
-        document.querySelectorAll('.school-other').forEach(el => el.addEventListener('input', saveAllData));
+        document.querySelectorAll('.school-select').forEach(el => el.addEventListener('change', (e) => {
+            toggleOtherInput(e.target);
+            saveAllData();
+            // אם זה בטבלת הפירוט, עדכן מספר רכב ודרגה
+            if(e.target.closest('#examTableBody')) {
+                onExamSchoolChange(e.target);
+            }
+        }));
+        document.querySelectorAll('.school-other').forEach(el => el.addEventListener('input', (e) => {
+            saveAllData();
+            // אם זה בטבלת הפירוט, עדכן מספר רכב ודרגה
+            if(e.target.closest('#examTableBody')) {
+                const row = e.target.closest('tr');
+                const schoolSelect = row.querySelector('.school-select');
+                onExamSchoolChange(schoolSelect);
+            }
+        }));
+        // עדכון דרגה כשבוחרים מספר רכב
+        document.querySelectorAll('.vehicle-num-select').forEach(el => el.addEventListener('change', (e) => {
+            onVehicleNumChange(e.target);
+        }));
+        // עדכון ספירת נבחנים כשמעדכנים שם נבחן
+        document.querySelectorAll('#examTableBody input.exam-input').forEach(el => {
+            el.addEventListener('input', () => {
+                setTimeout(updateTesterCounts, 100); // עדכן אחרי קצת זמן
+            });
+        });
     }
 
     function saveAllData() { savePlanData(); saveExamData(); }
@@ -455,6 +653,7 @@
         localStorage.setItem('header_day', document.getElementById('daySelect').value);
         localStorage.setItem('header_date', document.getElementById('dateInput').value);
         localStorage.setItem('header_testers', document.getElementById('testersInput').value);
+        localStorage.setItem('header_area_code', document.getElementById('areaCode').value);
     }
     function saveNotes() { localStorage.setItem('general_notes', document.getElementById('generalNotes').value); }
 
@@ -476,7 +675,30 @@
                 if (i < examData.length) {
                     el.value = examData[i];
                     if(el.classList.contains('school-select') && el.value === 'other') toggleOtherInput(el);
-                    
+
+                    // אם זה בחירת בית ספר, עדכן את רשימת מספרי הרכב
+                    if(el.classList.contains('school-select') && el.value && el.value !== 'other') {
+                        const row = el.closest('tr');
+                        if(row) {
+                            const vehicleNumSelect = row.querySelector('.vehicle-num-select');
+                            if(vehicleNumSelect) {
+                                const schoolPlanData = getPlanDataBySchool(el.value);
+                                const uniqueVehicles = [...new Set(schoolPlanData.map(p => p.vehicleNum).filter(v => v))];
+                                let vehicleOptions = '<option value=""></option>';
+                                uniqueVehicles.forEach(v => {
+                                    vehicleOptions += `<option value="${v}">${v}</option>`;
+                                });
+                                vehicleNumSelect.innerHTML = vehicleOptions;
+
+                                // עדכן גם את הדרגה לפי הראשון
+                                const gradeSelect = row.querySelector('.grade-select');
+                                if(gradeSelect && schoolPlanData.length > 0 && schoolPlanData[0].vehicleType) {
+                                    gradeSelect.value = schoolPlanData[0].vehicleType;
+                                }
+                            }
+                        }
+                    }
+
                     if (el.classList.contains('result-select') && el.value === 'נכשל') {
                         el.previousElementSibling.style.display = 'inline-block';
                     }
@@ -488,6 +710,12 @@
         loadTesterData();
 
         calcTotals();
+
+        // עדכן רשימות בוחנים בטבלת הפירוט
+        updateExamTesterSelects();
+
+        // חשב כמויות נבחנים לכל בוחן
+        setTimeout(updateTesterCounts, 200);
     }
 
     function initAreaSelect() {
@@ -608,8 +836,8 @@
             });
         }
         row.innerHTML = `
-            <td><select class="tbl-input tester-input tester-select">${testerOptions}</select></td>
-            <td><input class="tbl-input tester-input" type="number" min="0" max="20"></td>
+            <td><select class="tbl-input tester-input tester-select" onchange="updateTesterCounts()">${testerOptions}</select></td>
+            <td><input class="tbl-input tester-input urban-count" type="number" min="0" max="20" oninput="markManualEdit(this)"></td>
             <td><input class="tbl-input tester-input" type="number" min="0" max="20"></td>
         `;
         tbody.appendChild(row);
@@ -632,6 +860,69 @@
             sel.innerHTML = testerOptions;
             if(currentVal) sel.value = currentVal;
         });
+        // עדכן גם את רשימת הבוחנים בטבלת הפירוט
+        updateExamTesterSelects();
+    }
+
+    // עדכון רשימת הבוחנים בטבלת פירוט נבחנים
+    function updateExamTesterSelects() {
+        const testersFromInput = document.getElementById('testersInput').value;
+        let testerOptions = '<option value=""></option>';
+        if(testersFromInput) {
+            testersFromInput.split(',').forEach(t => {
+                const name = t.trim();
+                if(name) testerOptions += `<option value="${name}">${name}</option>`;
+            });
+        }
+        document.querySelectorAll('.exam-tester-select').forEach(sel => {
+            const currentVal = sel.value;
+            sel.innerHTML = testerOptions;
+            if(currentVal) sel.value = currentVal;
+        });
+    }
+
+    // חישוב כמויות נבחנים לכל בוחן ועדכון טבלת הבוחנים
+    function updateTesterCounts() {
+        // ספור נבחנים לכל בוחן מטבלת הפירוט
+        const testerCounts = {};
+        document.querySelectorAll('.exam-tester-select').forEach(sel => {
+            const testerName = sel.value;
+            if(testerName) {
+                // בדוק אם יש שם נבחן בשורה (כדי לספור רק שורות מלאות)
+                const row = sel.closest('tr');
+                const examNameInput = row.querySelectorAll('input.exam-input')[1]; // שדה שם הנבחן
+                if(examNameInput && examNameInput.value.trim()) {
+                    testerCounts[testerName] = (testerCounts[testerName] || 0) + 1;
+                }
+            }
+        });
+
+        // עדכן את עמודת "עירוני" בטבלת הבוחנים
+        const testerRows = document.querySelectorAll('#testersTableBody tr');
+        testerRows.forEach(row => {
+            const testerSelect = row.querySelector('.tester-select');
+            const urbanInput = row.querySelector('input[type="number"]'); // העמודה השנייה - עירוני
+            if(testerSelect && urbanInput) {
+                const testerName = testerSelect.value;
+                const count = testerCounts[testerName] || 0;
+                // עדכן רק אם השדה ריק או אם יש ערך אוטומטי קודם
+                if(!urbanInput.dataset.manual || urbanInput.dataset.manual !== 'true') {
+                    urbanInput.value = count > 0 ? count : '';
+                    urbanInput.dataset.autoValue = count;
+                }
+            }
+        });
+
+        saveExamData();
+    }
+
+    // סמן שהשדה עודכן ידנית
+    function markManualEdit(input) {
+        if(input.value != input.dataset.autoValue) {
+            input.dataset.manual = 'true';
+        } else {
+            input.dataset.manual = 'false';
+        }
     }
 
     function removeTesterRow() {
@@ -1360,6 +1651,334 @@
     document.getElementById('distributeModal')?.addEventListener('click', function(e) {
         if(e.target === this) closeDistributeModal();
     });
+    document.getElementById('shareModal')?.addEventListener('click', function(e) {
+        if(e.target === this) closeShareModal();
+    });
+
+    // ============ שיתוף וייבוא נתונים ============
+    let importedTesters = [];
+
+    function openShareModal() {
+        // עדכן קוד אזור
+        document.getElementById('shareAreaCode').value = document.getElementById('areaCode').value || '';
+
+        // עדכן רשימת בוחנים לייצוא
+        const testersInput = document.getElementById('testersInput').value;
+        const exportSelect = document.getElementById('exportTesterName');
+        exportSelect.innerHTML = '<option value="">בחר בוחן...</option>';
+        if(testersInput) {
+            testersInput.split(',').forEach(t => {
+                const name = t.trim();
+                if(name) exportSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+        }
+
+        // הצג בוחנים מיובאים
+        renderImportedTesters();
+
+        document.getElementById('shareModal').classList.add('active');
+    }
+
+    function closeShareModal() {
+        document.getElementById('shareModal').classList.remove('active');
+    }
+
+    // יצירת קוד אזור אוטומטי
+    function generateAreaCode() {
+        const date = document.getElementById('dateInput').value;
+        const areaSelect = document.getElementById('areaSelect');
+        const area = areaSelect.options[areaSelect.selectedIndex]?.text || '';
+
+        if(date && area && area !== 'בחר אזור...' && area !== '') {
+            const parts = date.split('/');
+            if(parts.length >= 2) {
+                const dd = parts[0].padStart(2, '0');
+                const mm = parts[1].padStart(2, '0');
+                const yy = parts.length > 2 ? parts[2].slice(-2) : '';
+                const areaCode = area.slice(0, 2);
+                const newCode = `${dd}${mm}${yy}-${areaCode}`;
+                document.getElementById('areaCode').value = newCode;
+                localStorage.setItem('header_area_code', newCode);
+            }
+        }
+    }
+
+    function copyAreaCode() {
+        const code = document.getElementById('shareAreaCode').value;
+        if(!code) {
+            alert('אין קוד אזור');
+            return;
+        }
+        navigator.clipboard.writeText(code).then(() => {
+            alert('הקוד הועתק!');
+        });
+    }
+
+    // ייצוא נתונים - לשליחה לבוחן אחראי
+    function exportMyData() {
+        const areaCode = document.getElementById('areaCode').value.trim();
+        const testerName = document.getElementById('exportTesterName').value;
+
+        if (!areaCode) {
+            alert('יש להזין קוד אזור משותף');
+            return;
+        }
+        if (!testerName) {
+            alert('יש לבחור בוחן');
+            return;
+        }
+
+        // אסוף נתונים מטבלת הפירוט - רק שורות עם תוצאה
+        const examData = [];
+        document.querySelectorAll('#examTableBody tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const resultSelect = row.querySelector('.result-select');
+            const result = resultSelect?.value;
+
+            if(result && (result === 'עבר' || result === 'נכשל')) {
+                // קבל שם בית ספר
+                const schoolSelect = row.querySelector('.school-select');
+                const schoolOther = row.querySelector('.school-other');
+                let schoolName = schoolSelect?.value || '';
+                if(schoolName === 'other' && schoolOther) schoolName = schoolOther.value;
+
+                // קבל בוחן
+                const testerSelect = row.querySelector('.exam-tester-select');
+                const rowTester = testerSelect?.value || '';
+
+                // ייצא רק את הנתונים של הבוחן הנבחר
+                if(rowTester === testerName) {
+                    const inputs = row.querySelectorAll('input.exam-input');
+                    const selects = row.querySelectorAll('select.exam-input');
+
+                    examData.push({
+                        school: schoolName,
+                        vehicleNum: row.querySelector('.vehicle-num-select')?.value || '',
+                        id: inputs[0]?.value || '', // ת.ז
+                        name: inputs[1]?.value || '', // שם
+                        grade: row.querySelector('.grade-select')?.value || '',
+                        population: selects[1]?.value || '', // אוכלוסיה
+                        testNum: selects[2]?.value || '', // מספר מבחן
+                        result: result === 'עבר' ? 'pass' : 'fail'
+                    });
+                }
+            }
+        });
+
+        if (examData.length === 0) {
+            alert('אין נבחנים עם תוצאות לייצוא עבור הבוחן שנבחר');
+            return;
+        }
+
+        const exportObj = {
+            v: 1,
+            code: areaCode,
+            tester: testerName,
+            examinees: examData
+        };
+
+        // קידוד ל-Base64
+        const jsonStr = JSON.stringify(exportObj);
+        const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+
+        // העתק ללוח
+        navigator.clipboard.writeText(encoded).then(() => {
+            const status = document.getElementById('exportStatus');
+            status.innerHTML = `<div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
+                ✅ הועתק! שלח בוואטסאפ לבוחן האחראי<br>
+                <small>(${examData.length} נבחנים)</small>
+            </div>`;
+        }).catch(() => {
+            prompt('העתק את הטקסט הזה ושלח לבוחן האחראי:', encoded);
+        });
+    }
+
+    // ייבוא נתונים - לבוחן אחראי
+    function importTesterData() {
+        const text = document.getElementById('importDataText').value.trim();
+        const myAreaCode = document.getElementById('areaCode').value.trim();
+        const status = document.getElementById('importStatus');
+
+        if (!text) {
+            status.innerHTML = '<span style="color: red;">יש להדביק נתונים</span>';
+            return;
+        }
+
+        try {
+            // פענוח Base64
+            const jsonStr = decodeURIComponent(escape(atob(text)));
+            const data = JSON.parse(jsonStr);
+
+            // בדיקת קוד אזור
+            if (myAreaCode && data.code !== myAreaCode) {
+                if (!confirm(`קוד האזור לא תואם!\nשלך: ${myAreaCode}\nהתקבל: ${data.code}\n\nלייבא בכל זאת?`)) {
+                    return;
+                }
+            }
+
+            // בדוק אם הבוחן כבר יובא
+            const existingIdx = importedTesters.findIndex(t => t.tester === data.tester);
+            if (existingIdx >= 0) {
+                if (!confirm(`נתונים מ"${data.tester}" כבר קיימים. להחליף?`)) {
+                    return;
+                }
+                importedTesters.splice(existingIdx, 1);
+            }
+
+            // הוסף לרשימת הבוחנים המיובאים
+            importedTesters.push({
+                tester: data.tester,
+                examinees: data.examinees
+            });
+
+            // נקה שדה הקלט
+            document.getElementById('importDataText').value = '';
+
+            // עדכן תצוגה
+            renderImportedTesters();
+            saveImportedTesters();
+
+            status.innerHTML = `<span style="color: green;">✅ יובאו ${data.examinees.length} נבחנים מ"${data.tester}"</span>`;
+
+        } catch (e) {
+            status.innerHTML = '<span style="color: red;">❌ שגיאה בקריאת הנתונים - ודא שהעתקת נכון</span>';
+            console.error(e);
+        }
+    }
+
+    // הצגת רשימת בוחנים שיובאו
+    function renderImportedTesters() {
+        const container = document.getElementById('importedTestersList');
+        if (!container) return;
+
+        if (importedTesters.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '<h4 style="margin: 10px 0 5px 0; color: #2e7d32;">בוחנים שיובאו:</h4>';
+        importedTesters.forEach((t, idx) => {
+            const passCount = t.examinees.filter(e => e.result === 'pass').length;
+            const failCount = t.examinees.filter(e => e.result === 'fail').length;
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
+                    <div>
+                        <strong>${t.tester}</strong>
+                        <span style="color: #666; font-size: 12px;">(${t.examinees.length} נבחנים: ${passCount} ✓ / ${failCount} ✗)</span>
+                    </div>
+                    <div>
+                        <button onclick="addImportedToTable(${idx})" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 5px;">הוסף לטבלה</button>
+                        <button onclick="removeImportedTester(${idx})" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">הסר</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    // הסרת בוחן מיובא
+    function removeImportedTester(idx) {
+        importedTesters.splice(idx, 1);
+        renderImportedTesters();
+        saveImportedTesters();
+    }
+
+    // הוספת נתונים מיובאים לטבלת הפירוט
+    function addImportedToTable(idx) {
+        const imported = importedTesters[idx];
+        if(!imported) return;
+
+        // מצא שורות ריקות בטבלה
+        const rows = document.querySelectorAll('#examTableBody tr');
+        let addedCount = 0;
+
+        imported.examinees.forEach(ex => {
+            // חפש שורה ריקה
+            let targetRow = null;
+            for(const row of rows) {
+                const resultSelect = row.querySelector('.result-select');
+                const nameInput = row.querySelectorAll('input.exam-input')[1];
+                if(!resultSelect?.value && !nameInput?.value) {
+                    targetRow = row;
+                    break;
+                }
+            }
+
+            if(targetRow) {
+                // מלא את השורה
+                const schoolSelect = targetRow.querySelector('.school-select');
+                if(schoolSelect) {
+                    // נסה למצוא את בית הספר ברשימה
+                    const option = Array.from(schoolSelect.options).find(o => o.value === ex.school);
+                    if(option) {
+                        schoolSelect.value = ex.school;
+                    } else if(ex.school) {
+                        schoolSelect.value = 'other';
+                        toggleOtherInput(schoolSelect);
+                        const otherInput = targetRow.querySelector('.school-other');
+                        if(otherInput) otherInput.value = ex.school;
+                    }
+                    onExamSchoolChange(schoolSelect);
+                }
+
+                const vehicleSelect = targetRow.querySelector('.vehicle-num-select');
+                if(vehicleSelect && ex.vehicleNum) {
+                    // הוסף אופציה אם לא קיימת
+                    if(!vehicleSelect.querySelector(`option[value="${ex.vehicleNum}"]`)) {
+                        vehicleSelect.innerHTML += `<option value="${ex.vehicleNum}">${ex.vehicleNum}</option>`;
+                    }
+                    vehicleSelect.value = ex.vehicleNum;
+                }
+
+                const inputs = targetRow.querySelectorAll('input.exam-input');
+                if(inputs[0]) inputs[0].value = ex.id || ''; // ת.ז
+                if(inputs[1]) inputs[1].value = ex.name || ''; // שם
+
+                const gradeSelect = targetRow.querySelector('.grade-select');
+                if(gradeSelect && ex.grade) gradeSelect.value = ex.grade;
+
+                const selects = targetRow.querySelectorAll('select.exam-input');
+                if(selects[1] && ex.population) selects[1].value = ex.population; // אוכלוסיה
+
+                const testerSelect = targetRow.querySelector('.exam-tester-select');
+                if(testerSelect) testerSelect.value = imported.tester;
+
+                if(selects[2] && ex.testNum) selects[2].value = ex.testNum; // מספר מבחן
+
+                const resultSelect = targetRow.querySelector('.result-select');
+                if(resultSelect) {
+                    resultSelect.value = ex.result === 'pass' ? 'עבר' : 'נכשל';
+                    checkFail(resultSelect);
+                }
+
+                addedCount++;
+            }
+        });
+
+        saveExamData();
+        updateTesterCounts();
+
+        alert(`נוספו ${addedCount} נבחנים לטבלה`);
+
+        // הסר את הבוחן המיובא מהרשימה
+        if(addedCount === imported.examinees.length) {
+            removeImportedTester(idx);
+        }
+    }
+
+    // שמירת בוחנים מיובאים
+    function saveImportedTesters() {
+        localStorage.setItem('imported_testers', JSON.stringify(importedTesters));
+    }
+
+    // טעינת בוחנים מיובאים
+    function loadImportedTesters() {
+        const saved = localStorage.getItem('imported_testers');
+        if(saved) {
+            importedTesters = JSON.parse(saved);
+        }
+    }
+
 </script>
 </body>
 </html>
