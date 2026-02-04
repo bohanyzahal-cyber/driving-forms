@@ -992,15 +992,16 @@
 
     function getRowData(selectElem) {
         const row = selectElem.closest('tr');
-        const inputs = row.querySelectorAll('input:not(.other-input).exam-input'); 
+        const cells = row.querySelectorAll('td');
+        // עמודות: 0=מס', 1=ביה"ס, 2=מס'רכב, 3=ת.ז, 4=שם, 5=דרגה, 6=אוכלוסיה, 7=בוחן, 8=מבחן, 9=תוצאה
         const schoolSel = row.querySelector('.school-select');
         const schoolOther = row.querySelector('.school-other');
         const schoolVal = (schoolSel.value === 'other') ? schoolOther.value : schoolSel.value;
-        const carVal = inputs[0].value || '';
-        const idVal = inputs[1].value || '';
-        const nameVal = inputs[2].value || '';
+        const carVal = cells[2]?.querySelector('select')?.value || '';
+        const idVal = cells[3]?.querySelector('input')?.value || '';
+        const nameVal = cells[4]?.querySelector('input')?.value || '';
         const dateVal = document.getElementById('dateInput').value || '';
-        const testerVal = document.getElementById('testersInput').value.split(',')[0].trim();
+        const testerVal = row.querySelector('.exam-tester-select')?.value || document.getElementById('testersInput').value.split(',')[0].trim();
         return { name: nameVal, id: idVal, car: carVal, school: schoolVal, date: dateVal, tester: testerVal };
     }
 
@@ -1762,7 +1763,6 @@
                         testNum: cells[8]?.querySelector('select')?.value || '',
                         result: result === 'עבר' ? 'pass' : 'fail'
                     };
-                    console.log('מייצא:', exportItem);
                     examData.push(exportItem);
                 }
             }
@@ -1944,9 +1944,6 @@
                 const testerSelect = cells[7]?.querySelector('select');
                 const testNumSelect = cells[8]?.querySelector('select');
                 const resultSelect = cells[9]?.querySelector('select');
-
-                console.log('מייבא לשורה:', ex);
-                console.log('שדות:', {idInput, nameInput, gradeSelect, populationSelect, testNumSelect});
 
                 if(idInput) idInput.value = ex.id || '';
                 if(nameInput) nameInput.value = ex.name || '';
