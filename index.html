@@ -1125,8 +1125,13 @@
         let areaName = (areaSelect.selectedIndex > 0) ? areaSelect.options[areaSelect.selectedIndex].text : 'כללי';
         const safeDate = dateVal.replace(/\//g, '-').replace(/\./g, '-');
         const safeArea = areaName.replace(/["']/g, '');
-        document.title = `סידור_עבודה_${safeArea}_${safeDate}`;
-        window.print();
+        const originalTitle = document.title;
+        document.title = `${safeArea} - ${safeDate}`;
+        // המתן רגע שהדפדפן יתעדכן עם השם החדש (חשוב לטאבלט)
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => { document.title = originalTitle; }, 1500);
+        }, 300);
     }
 
     // ============ חלוקת עבודה ============
