@@ -1125,13 +1125,21 @@
         let areaName = (areaSelect.selectedIndex > 0) ? areaSelect.options[areaSelect.selectedIndex].text : 'כללי';
         const safeDate = dateVal.replace(/\//g, '-').replace(/\./g, '-');
         const safeArea = areaName.replace(/["']/g, '');
+        const fileName = `${safeArea} - ${safeDate}`;
+        // שנה גם את ה-title tag וגם את document.title - לתמיכה בכל הדפדפנים כולל טאבלט
+        const titleTag = document.querySelector('title');
+        const originalTitleTag = titleTag ? titleTag.textContent : '';
         const originalTitle = document.title;
-        document.title = `${safeArea} - ${safeDate}`;
-        // המתן רגע שהדפדפן יתעדכן עם השם החדש (חשוב לטאבלט)
+        document.title = fileName;
+        if (titleTag) titleTag.textContent = fileName;
+        // המתן רגע שהדפדפן יתעדכן עם השם החדש
         setTimeout(() => {
             window.print();
-            setTimeout(() => { document.title = originalTitle; }, 1500);
-        }, 300);
+            setTimeout(() => {
+                document.title = originalTitle;
+                if (titleTag) titleTag.textContent = originalTitleTag;
+            }, 2000);
+        }, 500);
     }
 
     // ============ חלוקת עבודה ============
