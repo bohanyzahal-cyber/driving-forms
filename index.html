@@ -121,6 +121,7 @@
             .a4-page { width: 100%; margin: 0; border-radius: 0; }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -1126,20 +1127,32 @@
         const safeDate = dateVal.replace(/\//g, '-').replace(/\./g, '-');
         const safeArea = areaName.replace(/["']/g, '');
         const fileName = `${safeArea} - ${safeDate}`;
-        // שנה גם את ה-title tag וגם את document.title - לתמיכה בכל הדפדפנים כולל טאבלט
-        const titleTag = document.querySelector('title');
-        const originalTitleTag = titleTag ? titleTag.textContent : '';
-        const originalTitle = document.title;
-        document.title = fileName;
-        if (titleTag) titleTag.textContent = fileName;
-        // המתן רגע שהדפדפן יתעדכן עם השם החדש
-        setTimeout(() => {
-            window.print();
-            setTimeout(() => {
-                document.title = originalTitle;
-                if (titleTag) titleTag.textContent = originalTitleTag;
-            }, 2000);
-        }, 500);
+
+        const element = document.querySelector('.a4-page');
+        // הסתר כפתורים זמנית
+        const btnsToHide = element.querySelectorAll('.main-buttons, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, #pass-list-section, .btn-pass-list, .btn-open-form');
+        btnsToHide.forEach(b => b.style.display = 'none');
+        // הסתר select של בתי ספר והצג input
+        element.querySelectorAll('.school-select.hidden-print').forEach(el => el.style.display = 'none');
+        element.querySelectorAll('input.other-input.visible-print').forEach(el => { el.style.display = 'block'; el.style.border = 'none'; el.style.fontWeight = 'bold'; el.style.textAlign = 'center'; });
+        element.querySelectorAll('.btn-clear-other').forEach(el => el.style.display = 'none');
+
+        const opt = {
+            margin: [10, 5, 10, 5],
+            filename: fileName + '.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: element.scrollWidth },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            // החזר הכל
+            btnsToHide.forEach(b => b.style.display = '');
+            element.querySelectorAll('.school-select.hidden-print').forEach(el => el.style.display = '');
+            element.querySelectorAll('input.other-input.visible-print').forEach(el => { el.style.display = ''; el.style.border = ''; el.style.fontWeight = ''; el.style.textAlign = ''; });
+            element.querySelectorAll('.btn-clear-other').forEach(el => el.style.display = '');
+        });
     }
 
     // ============ חלוקת עבודה ============
