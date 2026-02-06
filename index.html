@@ -20,8 +20,8 @@
         .settings-panel input, .settings-panel select { width: 100%; padding: 6px; font-size: 14px; font-weight: bold; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .settings-title { grid-column: span 5; font-weight: bold; text-align: center; color: #0d47a1; margin-bottom: 5px; }
         .header-section { text-align: center; margin-bottom: 10px; }
-        .main-title { font-size: 20px; margin: 0; font-weight: normal; }
-        .sub-title { font-size: 16px; font-weight: bold; margin-top: 3px; }
+        .main-title { font-size: 20px; margin: 0; font-weight: normal; white-space: pre-wrap; word-spacing: normal; }
+        .sub-title { font-size: 16px; font-weight: bold; margin-top: 3px; white-space: pre-wrap; word-spacing: normal; }
 
         /* טבלאות */
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; direction: rtl; table-layout: fixed; }
@@ -1030,11 +1030,13 @@
         const day = document.getElementById('daySelect').value;
         const date = document.getElementById('dateInput').value;
         const areaSel = document.getElementById('areaSelect');
-        const area = areaSel.options[areaSel.selectedIndex] ? areaSel.options[areaSel.selectedIndex].text : ''; 
+        const area = areaSel.options[areaSel.selectedIndex] ? areaSel.options[areaSel.selectedIndex].text : '';
         const testers = document.getElementById('testersInput').value;
         const displayArea = (area === 'בחר אזור...' || !area) ? '_______' : area;
-        document.getElementById('dynamicTitle').innerText = `סידור עבודה ליום ${day} לתאריך ${date} לאזור ${displayArea}`;
-        document.getElementById('dynamicTesters').innerText = testers ? `הבוחנים: ${testers}` : '';
+        // שימוש ב-innerHTML עם &nbsp; כדי לשמור רווחים ב-PDF
+        const nbspReplace = (str) => str.replace(/ /g, '\u00A0');
+        document.getElementById('dynamicTitle').innerHTML = nbspReplace(`סידור עבודה ליום ${day} לתאריך ${date} לאזור ${displayArea}`);
+        document.getElementById('dynamicTesters').innerHTML = testers ? nbspReplace(`הבוחנים: ${testers}`) : '';
         if(testers) {
             const firstTester = testers.split(',')[0].trim();
             const details = testersDB[firstTester] || firstTester;
@@ -1128,31 +1130,21 @@
         const safeArea = areaName.replace(/["']/g, '');
         const fileName = `${safeArea} - ${safeDate}`;
 
-        const element = document.querySelector('.a4-page');
-        // הסתר כפתורים זמנית
-        const btnsToHide = element.querySelectorAll('.main-buttons, .settings-panel, .table-actions, .clear-sig-btn, #outbox-section, #pass-list-section, .btn-pass-list, .btn-open-form');
-        btnsToHide.forEach(b => b.style.display = 'none');
-        // הסתר select של בתי ספר והצג input
-        element.querySelectorAll('.school-select.hidden-print').forEach(el => el.style.display = 'none');
-        element.querySelectorAll('input.other-input.visible-print').forEach(el => { el.style.display = 'block'; el.style.border = 'none'; el.style.fontWeight = 'bold'; el.style.textAlign = 'center'; });
-        element.querySelectorAll('.btn-clear-other').forEach(el => el.style.display = 'none');
+        // שנה את כותרת הדף לשם הקובץ הרצוי
+        const titleTag = document.querySelector('title');
+        const originalTitleTag = titleTag ? titleTag.textContent : '';
+        const originalTitle = document.title;
+        document.title = fileName;
+        if (titleTag) titleTag.textContent = fileName;
 
-        const opt = {
-            margin: [10, 5, 10, 5],
-            filename: fileName + '.pdf',
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: element.scrollWidth },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        html2pdf().set(opt).from(element).save().then(() => {
-            // החזר הכל
-            btnsToHide.forEach(b => b.style.display = '');
-            element.querySelectorAll('.school-select.hidden-print').forEach(el => el.style.display = '');
-            element.querySelectorAll('input.other-input.visible-print').forEach(el => { el.style.display = ''; el.style.border = ''; el.style.fontWeight = ''; el.style.textAlign = ''; });
-            element.querySelectorAll('.btn-clear-other').forEach(el => el.style.display = '');
-        });
+        // המתן רגע ואז הדפס
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+                document.title = originalTitle;
+                if (titleTag) titleTag.textContent = originalTitleTag;
+            }, 2000);
+        }, 500);
     }
 
     // ============ חלוקת עבודה ============
