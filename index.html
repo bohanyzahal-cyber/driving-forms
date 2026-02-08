@@ -1825,7 +1825,7 @@
         });
     }
 
-    // ייבוא נתונים - לבוחן אחראי
+    // ייבוא נתונים - לבוחן אחראי (תומך בסיכום וברשימה)
     function importTesterData() {
         const text = document.getElementById('importDataText').value.trim();
         const myAreaCode = document.getElementById('areaCode').value.trim();
@@ -1857,11 +1857,36 @@
                 importedTesters.splice(existingIdx, 1);
             }
 
+            // תמיכה בגרסה חדשה (v2 עם summary) וגרסה ישנה (v1 עם examinees)
+            let importedData = { tester: data.tester };
+            let statusMsg = '';
+
+            if (data.v === 2 && data.summary) {
+                // גרסה חדשה - סיכום בלבד
+                importedData.summary = {
+                    passKadatz: data.summary.pK || 0,
+                    passVoucher: data.summary.pV || 0,
+                    passArmy: data.summary.pA || 0,
+                    passOther: data.summary.pO || 0,
+                    failKadatz: data.summary.fK || 0,
+                    failVoucher: data.summary.fV || 0,
+                    failArmy: data.summary.fA || 0,
+                    failOther: data.summary.fO || 0
+                };
+                const totalPass = importedData.summary.passKadatz + importedData.summary.passVoucher + importedData.summary.passArmy + importedData.summary.passOther;
+                const totalFail = importedData.summary.failKadatz + importedData.summary.failVoucher + importedData.summary.failArmy + importedData.summary.failOther;
+                const total = totalPass + totalFail;
+                statusMsg = `✅ יובא סיכום מ"${data.tester}" (${total} מבחנים: ${totalPass} עברו, ${totalFail} נכשלו)`;
+            } else if (data.examinees) {
+                // גרסה ישנה - רשימת נבחנים
+                importedData.examinees = data.examinees;
+                statusMsg = `✅ יובאו ${data.examinees.length} נבחנים מ"${data.tester}"`;
+            } else {
+                throw new Error('פורמט לא מוכר');
+            }
+
             // הוסף לרשימת הבוחנים המיובאים
-            importedTesters.push({
-                tester: data.tester,
-                examinees: data.examinees
-            });
+            importedTesters.push(importedData);
 
             // נקה שדה הקלט
             document.getElementById('importDataText').value = '';
@@ -1870,7 +1895,7 @@
             renderImportedTesters();
             saveImportedTesters();
 
-            status.innerHTML = `<span style="color: green;">✅ יובאו ${data.examinees.length} נבחנים מ"${data.tester}"</span>`;
+            status.innerHTML = `<span style="color: green;">${statusMsg}</span>`;
 
         } catch (e) {
             status.innerHTML = '<span style="color: red;">❌ שגיאה בקריאת הנתונים - ודא שהעתקת נכון</span>';
@@ -1890,16 +1915,30 @@
 
         let html = '<h4 style="margin: 10px 0 5px 0; color: #2e7d32;">בוחנים שיובאו:</h4>';
         importedTesters.forEach((t, idx) => {
-            const passCount = t.examinees.filter(e => e.result === 'pass').length;
-            const failCount = t.examinees.filter(e => e.result === 'fail').length;
+            let passCount, failCount, total;
+            let hasExaminees = false;
+
+            if (t.summary) {
+                // גרסה חדשה - סיכום בלבד
+                passCount = t.summary.passKadatz + t.summary.passVoucher + t.summary.passArmy + t.summary.passOther;
+                failCount = t.summary.failKadatz + t.summary.failVoucher + t.summary.failArmy + t.summary.failOther;
+                total = passCount + failCount;
+            } else if (t.examinees) {
+                // גרסה ישנה - רשימת נבחנים
+                passCount = t.examinees.filter(e => e.result === 'pass').length;
+                failCount = t.examinees.filter(e => e.result === 'fail').length;
+                total = t.examinees.length;
+                hasExaminees = true;
+            }
+
             html += `
                 <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px; border-radius: 5px; margin-bottom: 5px;">
                     <div>
                         <strong>${t.tester}</strong>
-                        <span style="color: #666; font-size: 12px;">(${t.examinees.length} נבחנים: ${passCount} ✓ / ${failCount} ✗)</span>
+                        <span style="color: #666; font-size: 12px;">(${total} מבחנים: ${passCount} ✓ / ${failCount} ✗)</span>
                     </div>
                     <div>
-                        <button onclick="addImportedToTable(${idx})" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 5px;">הוסף לטבלה</button>
+                        ${hasExaminees ? `<button onclick="addImportedToTable(${idx})" style="background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 5px;">הוסף לטבלה</button>` : ''}
                         <button onclick="removeImportedTester(${idx})" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">הסר</button>
                     </div>
                 </div>
