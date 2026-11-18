@@ -104,7 +104,7 @@
     </div>
 
     <div class="footer">
-        <textarea id="finalNotes" class="notes-area save-state" placeholder="הערות הבוחן יופיעו כאן אוטומטית..." oninput="autoResize(this); saveDraft()"></textarea>
+        <textarea id="finalNotes" class="notes-area save-state" readonly placeholder="הערות הבוחן יופיעו כאן אוטומטית מהמשפטים שנבחרו..."></textarea>
         
         <div class="summary-box">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -294,7 +294,7 @@
                 <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
                     <span class="label-text">${item}</span>
                     <select class="reason-select" onchange="toggleReason(this, '${item}')">
-                        ${options}<option value="אחר">הקלדה ידנית / אחר</option>
+                        ${options}
                     </select>
                 </div>
                 <select class="score-select no-print" onchange="markIcon(this); saveDraft()">
@@ -333,9 +333,7 @@
         const rawLabel = selectElem.parentElement.querySelector('.label-text').innerText;
         const cleanLabel = rawLabel.replace(/^\d+\.\s*/, '');
         
-        let formattedReason = "";
-        if (val === "אחר") formattedReason = `• ${cleanLabel}: `;
-        else formattedReason = `• ${cleanLabel}: ${val}`;
+        const formattedReason = `• ${cleanLabel}: ${val}`;
 
         const notesArea = document.getElementById('finalNotes');
         let currentText = notesArea.value;
